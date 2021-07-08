@@ -9,52 +9,30 @@ from matplotlib import patches
 
 
 class Track:
-    def __init__(self, allelipses, trackx, tracky, samplerate, trackname):
+    def __init__(self, trackx, tracky, samplerate, trackname):
 
         self.designator = trackname
         self.samplerate = float(samplerate)
+
         self.xtrack = np.array(trackx)
         self.ytrack = np.array(tracky)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.xtrack, self.ytrack)])
-        self.ellipse = self.closest_ellipse(allelipses)
-        self.ellipsepoints = self.closest_ellipse_point()
-        self.ztrack = np.array(self.calculatez())
-        self.unwrappedtrajectory = np.array(self.unwrapper())
-        self.timeaxis = np.linspace(1, len(self.unwrappedtrajectory) * self.samplerate, len(self.unwrappedtrajectory))
-        self.cumvelowithz = np.sum(
-            np.sqrt(np.diff(self.xtrack) ** 2 + np.diff(self.ytrack) ** 2 + np.diff(self.ztrack) ** 2)) / (
-                                    len(np.diff(self.ytrack)) * self.samplerate)
-        self.cumvelonoz = np.sum(np.sqrt(np.diff(self.xtrack) ** 2 + np.diff(self.ytrack) ** 2)) / (
-                len(np.diff(self.ytrack)) * self.samplerate)
-        self.smoothedtrajectory = self.smoothing()
-        self.instavelo = np.abs(np.gradient(self.smoothedtrajectory))
-        self.ellipse_error = np.mean(np.linalg.norm(self.xypairs - self.ellipsepoints, axis=1)*1000)
+        self.timeaxis = np.arange(0, len(self.xtrack), 1) * self.samplerate
 
+        self.ellipse = None
+        self.ellipsepoints = None
 
+        self.ztrack = None
+        self.unwrappedtrajectory = None
+        self.smoothedtrajectory = None
+        self.instavelo = None
+        self.ellipse_error = None
 
     def __repr__(self):
         return self.designator
 
     @classmethod
-    def generatetrack(cls, xmlfile, csvfile, samplenumber):
-
-        ellipses_data = pd.read_csv(csvfile, sep=",")
-        ellipsesdict = {}
-        # todo check these indexes
-        for i in list(ellipses_data.index.values):
-            ellipsesdict[str(i)] = {}
-            ellipsesdict[str(i)]["x0"] = ellipses_data.iloc[i]["X"]
-            ellipsesdict[str(i)]["y0"] = ellipses_data.iloc[i]["Y"]
-            # Check measurements on fiji
-            # ellipsesdict[str(i)]["bx"] = ellipses_data.iloc[i]["BX"]
-            # ellipsesdict[str(i)]["by"] = ellipses_data.iloc[i]["BY"]
-            # ellipsesdict[str(i)]["width"] = ellipses_data.iloc[i]["Width"]
-            # ellipsesdict[str(i)]["height"] = ellipses_data.iloc[i]["Height"]
-            ellipsesdict[str(i)]["major"] = ellipses_data.iloc[i]["Major"]
-            ellipsesdict[str(i)]["minor"] = ellipses_data.iloc[i]["Minor"]
-            # Transform the imagej angle into angle to x axis (90º to -90º)
-            ellipsesdict[str(i)]["angle"] = -ellipses_data.iloc[i]["Angle"] if ellipses_data.iloc[i]["Angle"] < 90 else \
-                180 - ellipses_data.iloc[i]["Angle"]
+    def generatetrack(cls, xmlfile):
 
         classlist = []
         root = ET.parse(xmlfile).getroot()
@@ -67,7 +45,7 @@ class Track:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
 
-            classlist.append(cls(ellipsesdict, tempx, tempy, srate, str(samplenumber) + f"_{counter}"))
+            classlist.append(cls(tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
 
         return classlist
