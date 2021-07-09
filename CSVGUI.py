@@ -5,7 +5,7 @@ from tracksv2 import Track
 
 
 # Class that inherits root window class from tk
-class IOWindow(tk.Tk):
+class csvGUI(tk.Tk):
     def __init__(self):
         super().__init__()  # init of tk.Tk
 
@@ -75,5 +75,5 @@ class IOWindow(tk.Tk):
 
 
 if __name__ == '__main__':
-    app = IOWindow()
+    app = csvGUI()
     app.mainloop()
