@@ -35,4 +35,3 @@ class analysisGUI(tk.Tk):
         stats_frame = tk.Frame(self)
         stats_frame.pack(fill='both', expand=True, side='right')
 
-    
