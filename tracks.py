@@ -36,7 +36,7 @@ class Track:
         return self.designator
 
     @classmethod
-    def generatetrack(cls, xmlfile, csvfile, samplenumber):
+    def generatetrack(cls, xmlfile, csvfile):
 
         ellipses_data = pd.read_csv(csvfile, sep=",")
         ellipsesdict = {}
@@ -67,7 +67,7 @@ class Track:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
 
-            classlist.append(cls(ellipsesdict, tempx, tempy, srate, str(samplenumber) + f"_{counter}"))
+            classlist.append(cls(ellipsesdict, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
 
         return classlist

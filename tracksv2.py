@@ -45,7 +45,7 @@ class Track:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
 
-            classlist.append(cls(tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
+                classlist.append(cls(tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
 
         return classlist
