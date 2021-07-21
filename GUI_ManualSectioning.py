@@ -15,7 +15,7 @@ from tracks import Track
 
 # Class that inherits root window class from tk
 class ManualSectioning(tk.Tk):
-    def __init__(self):
+    def __init__(self, tracks):
         super().__init__()  # init of tk.Tk()
 
         # End product, velocity of track sections
@@ -33,7 +33,7 @@ class ManualSectioning(tk.Tk):
         self.current_track = 0
 
         # Store all tracks
-        self.alltracks = np.load("AllTracks.npy", allow_pickle=True)
+        self.alltracks = tracks
 
         # Store canvas for updating
         self.canvas = None
@@ -130,15 +130,12 @@ class ManualSectioning(tk.Tk):
 
     def finishup(self):
         # Everything will be done in the bg
-        self.quit()
+        self.destroy()
 
-        delimiter2txt = {}
         for tr in self.alltracks:
             delimiter = self.findclosest_idx(self.clickdata[tr.designator], tr)
-            delimiter2txt[tr.designator] = delimiter
             x = tr.timeaxis
             y = tr.smoothedtrajectory
-            # plt.plot(x, y)
             if not delimiter.size:
                 m, b = self.slope(x, y)
                 self.section_velocity.append(m)
@@ -161,29 +158,6 @@ class ManualSectioning(tk.Tk):
 
         #save histogram
         self.section_velocity = np.abs(self.section_velocity)
-        n, bins, patches = plt.hist(x=self.section_velocity, bins='auto', density=True, alpha=0.4)
-        centerbins = []
-        for idx, bini in enumerate(bins):
-            if bini == bins[-1]:
-                continue
-            else:
-                centerbins.append((bins[idx + 1] + bins[idx]) / 2)
-
-        plt.plot(centerbins, n, 'k', linewidth=1, label="Original")
-        plt.xlabel('Velocity (mm/s)')
-        plt.ylabel('PDF')
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(r"histogramMANUAL.png")
-
-        # save data
-        df = pd.DataFrame.from_dict(delimiter2txt, orient='index')
-        df.transpose()
-        with pd.ExcelWriter(r'delimeters.xlsx') as writer:
-                df.to_excel(writer)
-
-        np.save("ManualSectioningResults.npy", self.section_velocity, allow_pickle=True)
-
 
     @staticmethod
     def findclosest_idx(clickarray, trackobject):

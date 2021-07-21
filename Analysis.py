@@ -54,7 +54,7 @@ def minmax(tracks):
                     nextd = delimiter[idx + 1]
                     m, b = slope(x[d:nextd], y[d:nextd])
                     section_velocity.append(m)
-                    
+
     section_velocity = np.abs(section_velocity)
 
     return section_velocity

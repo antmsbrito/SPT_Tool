@@ -77,7 +77,7 @@ class csvGUI(tk.Tk):
             tk.messagebox.showerror(title="No tracks", message="No tracks loaded!")
         else:
             self.destroy()
-            analysisapp = analysisGUI()
+            analysisapp = analysisGUI(self.TrackList)
             analysisapp.mainloop()
 
 if __name__ == '__main__':
