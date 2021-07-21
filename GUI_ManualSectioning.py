@@ -86,7 +86,7 @@ class ManualSectioning(tk.Tk):
 
     def clickGraph(self, event):
         if event.inaxes is not None:
-            print(event.xdata, event.ydata)
+            # print(event.xdata, event.ydata)
             ax = self.canvas.figure.axes[0]
             ax.axvline(x=event.xdata, color='r')
             self.canvas.draw()
@@ -130,6 +130,7 @@ class ManualSectioning(tk.Tk):
 
     def finishup(self):
         # Everything will be done in the bg
+        self.quit()
         self.destroy()
 
         for tr in self.alltracks:

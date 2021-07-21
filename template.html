@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Single Particle Tracking report - generated at {{date}}</title>
+</head>
+<body>
+    <h1>Single Particle Tracking report - generated at {{date}}</h1>
+    <img src="data:image/png;base64, {{enconded_hist}}">
+    <hr>
+
+    <p> <h2> Finite differences </h2>
+        <p>Mean {{finite_vel}} nm/s</p>
+        <p>Std Dev {{finite_std}} nm/s</p>
+        <p>Median {{finite_med}} nm/s</p>
+    </p>
+
+    <hr>
+    <p> <h2> MinMax sectioning </h2>
+        <p>Mean {{minmax_vel}} nm/s</p>
+        <p>Std Dev {{minmax_std}} nm/s</p>
+        <p>Median {{minmax_med}} nm/s</p>
+    </p>
+
+    <hr>
+    <p> <h2> Manual sectioning </h2>
+        <p>Mean {{manual_vel}} nm/s</p>
+        <p>Std Dev {{manual_std}} nm/s</p>
+        <p>Median {{manual_med}} nm/s</p>
+    </p>
+
+    <hr>
+    <p> <h2> Displacement </h2>
+        <p>Mean {{disp_vel}} nm/s</p>
+        <p>Std Dev {{disp_std}} nm/s</p>
+        <p>Median {{dis_med}} nm/s</p>
+    </p>
+    <hr>
+</body>
+</html>
