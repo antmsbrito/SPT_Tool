@@ -20,6 +20,7 @@ class analysisGUI(tk.Tk):
 
         self.wm_title("Analysis")
         self.title("Analysis")
+        self.geometry("150x150")
 
         self.TrackList = tracks
 
@@ -34,7 +35,7 @@ class analysisGUI(tk.Tk):
         self.displacement_velo_array = np.nan
 
         self.init_options()
-        self.init_stats()
+        # self.init_stats()
 
     def init_options(self):
         options_frame = tk.Frame(self)
@@ -72,30 +73,29 @@ class analysisGUI(tk.Tk):
         if self.manual_var.get():
             print("Manual...")
             TL = ManualSectioning(self.TrackList)
-            # TL.grab_set()
+            TL.grab_set()
             self.wait_window(TL)
-            print(1)
-            self.manual_velo_array = TL.section_velocity
-            n, bins, patches = plt.hist(x=self.manual_velo_array, bins='auto', density=True, alpha=0.4)
-            plt.plot(self.buildhistogram(bins), n, linewidth=1, label="Manual Sectioning")
+            self.manual_velo_array = TL.section_velocity * 1000
+            n, bins, patches = plt.hist(x=self.manual_velo_array, bins='auto', density=True, alpha=0.1)
+            plt.plot(self.buildhistogram(bins), n, 'k', linewidth=1, label="Manual Sectioning")
 
         if self.minmax_var.get():
             print("MinMax...")
             self.minmax_velo_array = minmax(self.TrackList)
-            n, bins, patches = plt.hist(x=self.minmax_velo_array, bins='auto', density=True, alpha=0.4)
-            plt.plot(self.buildhistogram(bins), n, linewidth=1, label="MinMax Sectioning")
+            n, bins, patches = plt.hist(x=self.minmax_velo_array, bins='auto', density=True, alpha=0.1)
+            plt.plot(self.buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
 
         if self.finite_var.get():
             print("Finite...")
             self.finite_velo_array = finite(self.TrackList)
-            n, bins, patches = plt.hist(x=self.finite_velo_array, bins='auto', density=True, alpha=0.4)
-            plt.plot(self.buildhistogram(bins), n, linewidth=1, label="Finite Differences")
+            n, bins, patches = plt.hist(x=self.finite_velo_array, bins='auto', density=True, alpha=0.1)
+            plt.plot(self.buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
 
         if self.displacement_var.get():
             print("Displacement...")
             self.displacement_velo_array = displacement(self.TrackList)
-            n, bins, patches = plt.hist(x=self.displacement_velo_array, bins='auto', density=True, alpha=0.4)
-            plt.plot(self.buildhistogram(bins), n, linewidth=1, label="Displacement")
+            n, bins, patches = plt.hist(x=self.displacement_velo_array, bins='auto', density=True, alpha=0.1)
+            plt.plot(self.buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
 
         print("Building histogram")
         plt.xlabel('Velocity (nm/s)')
@@ -111,25 +111,29 @@ class analysisGUI(tk.Tk):
             "finite_vel": np.mean(self.finite_velo_array),
             "finite_std": np.std(self.finite_velo_array),
             "finite_med": np.median(self.finite_velo_array),
-            "minmax_vel": np.mean(self.minmax_velo_array),
-            "minmax_std": np.std(self.minmax_velo_array),
-            "minmax_med": np.median(self.minmax_velo_array),
+            "minmax_vel": np.nanmean(self.minmax_velo_array),
+            "minmax_std": np.nanstd(self.minmax_velo_array),
+            "minmax_med": np.nanmedian(self.minmax_velo_array),
             "manual_vel": np.mean(self.manual_velo_array),
             "manual_std": np.std(self.manual_velo_array),
             "manual_med": np.median(self.manual_velo_array),
             "disp_vel": np.mean(self.displacement_velo_array),
             "disp_std": np.std(self.displacement_velo_array),
-            "disp_med": np.std(self.displacement_velo_array),
+            "disp_med": np.median(self.displacement_velo_array),
             "enconded_hist": encoded,
             "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
 
         with open(r"template.html", 'r') as f:
             template = Template(f.read())
 
-        with open(rf"SPT_{date.today().strftime('%d/%m/%Y')}.html", 'w+') as f:
+
+        with open(rf"SPT_{date.today().strftime('%d_%m_%Y')}.html", 'w+') as f:
             f.write(template.render(report_dict))
 
         tk.messagebox.showinfo(title="All done!", message="Check for the .html file for full report")
+
+        self.destroy()
+
     @staticmethod
     def buildhistogram(bins):
         centerbins = []

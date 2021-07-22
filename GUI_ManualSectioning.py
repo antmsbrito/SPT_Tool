@@ -14,7 +14,7 @@ from tracks import Track
 
 
 # Class that inherits root window class from tk
-class ManualSectioning(tk.Tk):
+class ManualSectioning(tk.Toplevel):
     def __init__(self, tracks):
         super().__init__()  # init of tk.Tk()
 

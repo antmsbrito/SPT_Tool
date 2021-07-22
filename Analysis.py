@@ -15,6 +15,20 @@ def findallpeaks(y):
     inflexion = np.union1d(peaks3, peaks4)
 
     allpeaks = np.union1d(peaks, inflexion)
+    removes = []
+    for idx,peak in enumerate(allpeaks):
+        if idx == 0:
+            continue
+        else:
+            if peak-allpeaks[idx-1]==1:
+                removes.append(idx)
+
+    if allpeaks[0] == 1:
+        removes.append(0)
+    if allpeaks[-1] == len(y)-1:
+        removes.append(-1)
+    allpeaks = np.delete(allpeaks,removes)
+
 
     return allpeaks
 
@@ -31,7 +45,7 @@ def displacement(tracks):
         displacement = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
         velo = np.append(velo, displacement / tr.samplerate)
 
-    return velo
+    return velo * 1000
 
 def minmax(tracks):
     section_velocity = []
@@ -57,7 +71,7 @@ def minmax(tracks):
 
     section_velocity = np.abs(section_velocity)
 
-    return section_velocity
+    return section_velocity * 1000
 
 def finite(tracks):
     velo = []
@@ -66,5 +80,5 @@ def finite(tracks):
             x = tr.timeaxis
             y = tr.smoothedtrajectory
             velo = np.append(velo, np.abs(np.gradient(y,x)))
-    return velo
+    return velo * 1000
 
