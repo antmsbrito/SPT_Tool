@@ -7,7 +7,7 @@
 ### Setup instructions:
 ###### 1. Install Anaconda3
 ###### 2. Clone or Download as zip this project
-###### 3. Open Terminal inside SPT_Tool directory
+###### 3. Open anaconda3 prompt terminal inside SPT_Tool directory
 ###### 4. Create a new environment (optional)
 ###### `conda create -n env_name python=3.8.6`
 ###### 5. Activate environment (optional)
