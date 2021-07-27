@@ -15,22 +15,27 @@ def findallpeaks(y):
     inflexion = np.union1d(peaks3, peaks4)
 
     allpeaks = np.union1d(peaks, inflexion)
-    removes = []
-    for idx,peak in enumerate(allpeaks):
-        if idx == 0:
+    allpeaks = np.sort(allpeaks)
+
+    # If peak is at the start or at the end just ignore them
+    if allpeaks[0] == 1:
+        allpeaks=allpeaks[1:]
+    if allpeaks[-1] == len(y)-2:
+        allpeaks = allpeaks[:-1]
+
+    final_peaks = []
+    # If peaks are consecutive ignore the smaller one
+    for idx,d in enumerate(allpeaks):
+        try:
+            nd = allpeaks[idx+1]
+        except IndexError:
+            continue
+        if nd - d == 1:
             continue
         else:
-            if peak-allpeaks[idx-1]==1:
-                removes.append(idx)
+            final_peaks.append(d)
 
-    if allpeaks[0] == 1:
-        removes.append(0)
-    if allpeaks[-1] == len(y)-1:
-        removes.append(-1)
-    allpeaks = np.delete(allpeaks,removes)
-
-
-    return allpeaks
+    return np.array(final_peaks)
 
 def slope(x, y):
     s, o, r_value, p_value, std_err = linregress(x, y)
@@ -81,4 +86,6 @@ def finite(tracks):
             y = tr.smoothedtrajectory
             velo = np.append(velo, np.abs(np.gradient(y,x)))
     return velo * 1000
+
+
 
