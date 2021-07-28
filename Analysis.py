@@ -3,6 +3,9 @@ from scipy.signal import find_peaks
 from scipy.stats import linregress
 import numpy as np
 
+import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+
 
 def findallpeaks(y):
     peaks1, _ = find_peaks(y)
@@ -48,6 +51,11 @@ def displacement(tracks):
         ycoord = np.diff(tr.ytrack)
         zcoord = np.diff(tr.ztrack)
         displacement = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
+        # plt.plot(tr.timeaxis[1:], displacement)
+        # plt.plot(tr.timeaxis[1:], savgol_filter(displacement, window_length=21, polyorder=5))
+        # plt.show()
+        # wl = len(displacement)//2 - 1 if len(displacement)//2 % 2==0 else len(displacement)//2
+        # displacement = savgol_filter(displacement, window_length=wl, polyorder=5)
         velo = np.append(velo, displacement / tr.samplerate)
 
     return velo * 1000
