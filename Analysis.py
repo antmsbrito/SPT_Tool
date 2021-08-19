@@ -6,11 +6,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def smoothing(unsmoothed, windowsize):
-    # Moving average
+    # Helper function for displacement method
+    # Moving average smoothing
+    # Convolves with a array ones
     smoothed = np.convolve(unsmoothed, np.ones(windowsize) / windowsize, mode='valid')
     return smoothed
 
 def findallpeaks(y):
+    """
+    Helper function for the minmax method
+
+    Calculates all minimums,maximums and inflexion points of an array. Since they are the delimiters for
+    slope calculations they ignore points at the start, end and consecutive points.
+
+    """
     peaks1, _ = find_peaks(y)
     peaks2, _ = find_peaks(y*-1)
     peaks = np.union1d(peaks2, peaks1)
@@ -44,10 +53,17 @@ def findallpeaks(y):
     return np.array(final_peaks)
 
 def slope(x, y):
+    # Helper function for minmax method, calculates the slope
     s, o, r_value, p_value, std_err = linregress(x, y)
     return s, o
 
 def displacement(tracks):
+    """
+    Displacement method. For a list of tracks calculates the displacement between each point in 3D
+    The velocity is calculated by dividing each displacement by the sample rate and smoothing everything
+    by a 30% window moving average.
+    """
+
     velo = []
     for tr in tracks:
         xcoord = np.diff(tr.xtrack)
@@ -55,28 +71,25 @@ def displacement(tracks):
         zcoord = np.diff(tr.ztrack)
         displacement = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
 
-        # plt.plot(tr.timeaxis[1:], displacement)
-        # plt.plot(tr.timeaxis[1:], savgol_filter(displacement, window_length=21, polyorder=5))
-        # plt.show()
-        # wl = len(displacement)//2 - 1 if len(displacement)//2 % 2==0 else len(displacement)//2
-        # displacement = savgol_filter(displacement, window_length=wl, polyorder=5)
 
-        # I need to section the displacement; I'll test three approaches
-        # 1- Smooth and finite diff
-        # 2- Smooth and minmax
-        #plt.plot(displacement/ tr.samplerate, '+--')
-        #plt.plot(smoothing(displacement/ tr.samplerate), '*--')
-        #plt.show()
+        # In reality we are looking to regions of flatness
+        # Plateaus of slope zero which indicate constant velocity
 
-        velo = np.append(velo, smoothing(displacement/ tr.samplerate))
+        window = int((len(displacement)*30)//100)
+        velo = np.append(velo, smoothing(displacement/tr.samplerate, window))
 
     return velo * 1000
 
 def minmax(tracks):
+    """
+    Minmax method
+    Given a set of delimiters (min, max and inflexion points), calculates the slopes between those delimiters
+    """
+
     section_velocity = []
     for tr in tracks:
-        x = tr.timeaxis
         y = tr.smoothedtrajectory
+        x = np.array(range(len(y))) * tr.samplerate
         delimiter = findallpeaks(y)
 
         if not delimiter.size: # not empty
@@ -99,11 +112,15 @@ def minmax(tracks):
     return section_velocity * 1000
 
 def finite(tracks):
+    """
+    Finite differences method
+    Self explanatory, Central differences 2nd order, 1st order for the boundaries
+    """
     velo = []
     for tr in tracks:
         if True:
-            x = tr.timeaxis
             y = tr.smoothedtrajectory
+            x = np.array(range(len(y))) * tr.samplerate
             velo = np.append(velo, np.abs(np.gradient(y,x)))
     return velo * 1000
 
