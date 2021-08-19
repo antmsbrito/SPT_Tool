@@ -11,26 +11,46 @@ from matplotlib import patches
 class Track:
     def __init__(self, allelipses, trackx, tracky, samplerate, trackname):
 
+        # Name based on file
         self.designator = trackname
+
+        # Trackmate output
         self.samplerate = float(samplerate)
+
+        # Track position directly of trackmate xml
         self.xtrack = np.array(trackx)
         self.ytrack = np.array(tracky)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.xtrack, self.ytrack)])
+
+        # Ellipse dictionary based upon csv file of the closest ellipse
         self.ellipse = self.closest_ellipse(allelipses)
+
+        # Coordinates of the closest ellipse points for each track coordinate pair (x,y)
         self.ellipsepoints = self.closest_ellipse_point()
+
+        # Calculate Z position based upon ellipse and the projected circle of said ellipse
         self.ztrack = np.array(self.calculatez())
+
+        # Unwrap the 2D trajectory of the real x's and y's around the projected circle
         self.unwrappedtrajectory = np.array(self.unwrapper())
-        self.timeaxis = np.linspace(1, len(self.unwrappedtrajectory) * self.samplerate, len(self.unwrappedtrajectory))
+
+        # To check magnitude for debugging purposes not used at all
         self.cumvelowithz = np.sum(
             np.sqrt(np.diff(self.xtrack) ** 2 + np.diff(self.ytrack) ** 2 + np.diff(self.ztrack) ** 2)) / (
                                     len(np.diff(self.ytrack)) * self.samplerate)
         self.cumvelonoz = np.sum(np.sqrt(np.diff(self.xtrack) ** 2 + np.diff(self.ytrack) ** 2)) / (
                 len(np.diff(self.ytrack)) * self.samplerate)
+
+        # Smoothing the unwrapped trajectory with a 20% window moving average
         self.smoothedtrajectory = self.smoothing()
-        self.instavelo = np.abs(np.gradient(self.smoothedtrajectory))
+
+        # For quality control purposes, currently only serves to check to remove tracks with no ellipses
         self.ellipse_error = np.mean(np.linalg.norm(self.xypairs - self.ellipsepoints, axis=1)*1000)
 
-
+        # No need to calculate a time axis. All our metrics are time invariant
+        # Better to leave the calculation for later in a case by case, since smoothing may introduce arrays
+        # with less elements
+        # self.timeaxis = np.linspace(1, len(self.unwrappedtrajectory) * self.samplerate, len(self.unwrappedtrajectory))
 
     def __repr__(self):
         return self.designator
@@ -189,9 +209,8 @@ class Track:
         return zcoord
 
     def smoothing(self):
-        b, a = butter(6, 0.125, btype='lowpass')
-        # w, h = freqz(b, a, worN=2000) # for frequency response if needed
-        fperi = filtfilt(b, a, self.unwrappedtrajectory, method="gust")
+        windowsize = int((len(self.unwrappedtrajectory)*20)//100)
+        fperi = np.convolve(self.unwrappedtrajectory, np.ones(windowsize) / windowsize, mode='valid')
         return fperi
 
     @staticmethod
