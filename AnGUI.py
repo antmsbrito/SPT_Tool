@@ -11,6 +11,7 @@ from tracks import Track
 
 from GUI_ManualSectioning import ManualSectioning
 
+
 # Class that inherits root window class from tk
 class analysisGUI(tk.Tk):
     def __init__(self, tracks):

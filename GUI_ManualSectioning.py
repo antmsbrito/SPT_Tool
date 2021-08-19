@@ -54,8 +54,9 @@ class ManualSectioning(tk.Toplevel):
         canvas = FigureCanvasTkAgg(fig, master=frame_plot)
         self.canvas = canvas
 
-        x = self.alltracks[self.current_track].timeaxis
+        SR = self.alltracks[self.current_track].samplerate
         y = self.alltracks[self.current_track].unwrappedtrajectory
+        x = np.array(range(len(y))) * SR
         smoothedy = self.alltracks[self.current_track].smoothedtrajectory
 
         ax = fig.add_subplot()
