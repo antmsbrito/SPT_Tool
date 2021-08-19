@@ -77,8 +77,13 @@ class csvGUI(tk.Tk):
             tk.messagebox.showerror(title="No tracks", message="No tracks loaded!")
         else:
             self.destroy()
+            # Currently this is just to ignore tracks with no ellipses drawn
+            self.checkTrackError()
             analysisapp = analysisGUI(self.TrackList)
             analysisapp.mainloop()
+
+    def checkTrackError(self):
+        self.TrackList = [t for t in self.TrackList if t.ellipse_error < 200]
 
 if __name__ == '__main__':
     app = csvGUI()

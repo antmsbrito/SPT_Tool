@@ -1,7 +1,7 @@
 import tkinter as tk
 import numpy as np
 
-from tracksv2 import Track
+from tracks import Track
 
 
 # Class that inherits root window class from tk
