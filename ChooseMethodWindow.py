@@ -25,13 +25,9 @@ class ChooseWindow(tk.Tk):
         gui.mainloop()
 
     def ellipse(self):
-        return 0
         self.destroy()
         gui = ellipseGUI()
         gui.mainloop()
-
-
-
 
 if __name__ == '__main__':
     app = ChooseWindow()

@@ -3,6 +3,9 @@ import numpy as np
 
 from tracks import Track
 
+from PIL import Image
+from matplotlib import pyplot as plt
+
 
 # Class that inherits root window class from tk
 class ellipseGUI(tk.Tk):
@@ -17,8 +20,10 @@ class ellipseGUI(tk.Tk):
         # List of track related objects
         self.TrackList = []
         self.NumberOfTracks = tk.IntVar()
+        self.CurrentTrack = tk.StringVar()
+        self.CurrentTrack.set("")
 
-        # Text for number of tracks loaded
+        # Text for number of tracks loaded and respective track name
         self.LabelText = tk.StringVar()
         self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
 
@@ -34,8 +39,8 @@ class ellipseGUI(tk.Tk):
         XML_button = tk.Button(master=frame_input, text="Load Trackmate .xml file", command=self.load_xml)
         XML_button.pack(fill='x')
 
-        # QUIT_button = tk.Button(master=frame_input, text="Quit", command=self.quit)
-        # QUIT_button.pack(side='bottom', fill='x')
+        ANALYSIS_button = tk.Button(master=frame_input, text="Draw Ellipses", command=self.drawing_button)
+        ANALYSIS_button.pack(fill='x', expand=True)
 
     def init_output(self):
         frame_output = tk.Frame(self)
@@ -43,36 +48,33 @@ class ellipseGUI(tk.Tk):
 
         status_text = tk.Label(master=frame_output, textvariable=self.LabelText)
         status_text.pack(side='top', fill='both')
-
-        ELLIPSE_button = tk.Button(master=frame_output, text="Draw Ellipses", command=self.draw_ellipse)
-        ELLIPSE_button.pack(side='top', fill='both')
-
-        OUTPUT_button = tk.Button(master=frame_output, text="Output", command=self.output)
-        OUTPUT_button.pack(side='top', fill='both')
+        track_text = tk.Label(master=frame_output, textvariable=self.CurrentTrack,wraplength=300, justify="center")
+        track_text.pack(side='bottom', fill='both')
 
     def load_xml(self):
 
         xml = tk.filedialog.askopenfilename(initialdir="C:", title="Select Trackmate xml file")
-
         if not xml[-3:] == "xml":
-            print("File extension not supported")
+            tk.messagebox.showerror(title="XML", message="File extension must be .xml")
         else:
-            self.TrackList = np.append(self.TrackList, Track.generatetrack(xml))
+            tk.messagebox.showinfo(title="Load image", message="Please load the corresponding image file")
+            image = []
+            while not image:
+                image = self.load_image(xml)
+
+            self.TrackList = np.append(self.TrackList, [1])
             self.NumberOfTracks.set(len(self.TrackList))
             self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
 
-    def draw_ellipse(self):
-        if self.NumberOfTracks.get() == 0:
-            print("No tracks!")
-        else:
-            newWindow = tk.Toplevel()
-            newWindow.title("Graph")
-            newWindow.geometry("600x600")
-            newWindow.grab_set()
+    def load_image(self, xmlpath):
+        imgdir = xmlpath
+        imgpath = tk.filedialog.askopenfilename(initialdir=imgdir, title="Select image file")
 
-    def output(self):
+        im = Image.open(imgpath)
+        return im
+
+    def drawing_button(self):
         pass
-
 
 if __name__ == '__main__':
     app = ellipseGUI()
