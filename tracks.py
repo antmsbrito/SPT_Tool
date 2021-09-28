@@ -56,7 +56,7 @@ class Track:
         return self.designator
 
     @classmethod
-    def generatetrack(cls, xmlfile, csvfile):
+    def generatetrackfromcsv(cls, xmlfile, csvfile):
 
         ellipses_data = pd.read_csv(csvfile, sep=",")
         ellipsesdict = {}
@@ -66,7 +66,7 @@ class Track:
             ellipsesdict[str(i)]["x0"] = ellipses_data.iloc[i]["X"]
             ellipsesdict[str(i)]["y0"] = ellipses_data.iloc[i]["Y"]
             # Check measurements on fiji
-            # ellipsesdict[str(i)]["bx"] = ellipses_data.iloc[i]["BX"]
+            # ellipsesdict[str(i)]["bx"] = ellipses_data.i  loc[i]["BX"]
             # ellipsesdict[str(i)]["by"] = ellipses_data.iloc[i]["BY"]
             # ellipsesdict[str(i)]["width"] = ellipses_data.iloc[i]["Width"]
             # ellipsesdict[str(i)]["height"] = ellipses_data.iloc[i]["Height"]
@@ -89,6 +89,17 @@ class Track:
 
             classlist.append(cls(ellipsesdict, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
+
+        return classlist
+
+    @classmethod
+    def generatetrack_ellipse(cls, precursorobjectlist, ellipse):
+        classlist = []
+
+        for idx, obj in enumerate(precursorobjectlist):
+            eli = ellipse[idx]
+            classlist.append(cls(eli, obj.x, obj.y, obj.srate, str(obj.xml).split('/')[-1][:-4] + f"_{idx}"))
+
 
         return classlist
 

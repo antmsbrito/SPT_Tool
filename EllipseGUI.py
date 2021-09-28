@@ -83,16 +83,19 @@ class ellipseGUI(tk.Tk):
 
 class PrecursorTrackObject():
 
-    def __init__(self, im, x, y):
+    def __init__(self, im, x, y, samplerate, xmlhandle):
         self.imageobject = im
         self.x = x
         self.y = y
+        self.xml = xmlhandle
+        self.sr = samplerate
 
     @classmethod
     def generator(cls,xmlfile, image):
 
         classlist = []
         root = ET.parse(xmlfile).getroot()
+        srate = root.attrib['frameInterval']
         counter = 0
         for children in root:
             tempx = []
@@ -100,7 +103,7 @@ class PrecursorTrackObject():
             for grandchildren in children:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
-            classlist.append(cls(image, tempx, tempy))
+            classlist.append(cls(image, tempx, tempy,srate,xmlfile))
             counter += 1
         return classlist
 
