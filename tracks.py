@@ -1,15 +1,12 @@
-import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
 from scipy.optimize import minimize, NonlinearConstraint
-from scipy.signal import butter, filtfilt
-import os
-from matplotlib import pyplot as plt
-from matplotlib import patches
+
+from Analysis import *
 
 
 class Track:
-    def __init__(self, allelipses, trackx, tracky, samplerate, trackname):
+    def __init__(self, ellipse, trackx, tracky, samplerate, trackname):
 
         # Name based on file
         self.designator = trackname
@@ -22,8 +19,7 @@ class Track:
         self.ytrack = np.array(tracky)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.xtrack, self.ytrack)])
 
-        # Ellipse dictionary based upon csv file of the closest ellipse
-        self.ellipse = self.closest_ellipse(allelipses)
+        self.ellipse = ellipse
 
         # Coordinates of the closest ellipse points for each track coordinate pair (x,y)
         self.ellipsepoints = self.closest_ellipse_point()
@@ -45,12 +41,20 @@ class Track:
         self.smoothedtrajectory = self.smoothing()
 
         # For quality control purposes, currently only serves to check to remove tracks with no ellipses
-        self.ellipse_error = np.mean(np.linalg.norm(self.xypairs - self.ellipsepoints, axis=1)*1000)
+        self.ellipse_error = np.mean(np.linalg.norm(self.xypairs - self.ellipsepoints, axis=1) * 1000)
 
         # No need to calculate a time axis. All our metrics are time invariant
         # Better to leave the calculation for later in a case by case, since smoothing may introduce arrays
         # with less elements
+        # In a case by case basis the samplerate is enough to define a suitable timeaxis
         # self.timeaxis = np.linspace(1, len(self.unwrappedtrajectory) * self.samplerate, len(self.unwrappedtrajectory))
+
+        self.finitediff = finite(self)
+        self.disp = displacement(self)
+        self.minmax = minmax(self)
+        self.manual = None
+
+
 
     def __repr__(self):
         return self.designator
@@ -87,7 +91,14 @@ class Track:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
 
-            classlist.append(cls(ellipsesdict, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
+            xmean = np.mean(tempx)
+            ymean = np.mean(tempy)
+            ellipsedistance = np.array(
+                [(ellipsesdict[elikey]["x0"] - xmean) ** 2 for elikey in ellipsesdict]) + np.array(
+                [(ellipsesdict[elikey]["y0"] - ymean) ** 2 for elikey in ellipsesdict])
+            closestellipse = ellipsesdict[str(np.argmin(ellipsedistance))]  # todo check if correct
+
+            classlist.append(cls(closestellipse, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
 
         return classlist
@@ -98,8 +109,7 @@ class Track:
 
         for idx, obj in enumerate(precursorobjectlist):
             eli = ellipse[idx]
-            classlist.append(cls(eli, obj.x, obj.y, obj.srate, str(obj.xml).split('/')[-1][:-4] + f"_{idx}"))
-
+            classlist.append(cls(eli, obj.x, obj.y, obj.sr, str(obj.xml).split('/')[-1][:-4] + f"_{idx}"))
 
         return classlist
 
@@ -130,9 +140,8 @@ class Track:
             initialguess = (
                 x0, y0)  # Initial guess for the algorithm, in lieu of a good guess just take the initial point
 
-            # Call to the minimization algorithm, two methods are available: SLSQP (quadratic, quick but more unstable);
+            # Call to the minimization algorithm, several methods are available: SLSQP (quadratic, quick but more unstable);
             # COBYLA (linear but more stable), trust-constr (gradient descent with barrier methods)
-            # In this problem trust-constr seems to yield better results
             result = minimize(self.objective_function, x0=initialguess, args=(xpoint, ypoint), method='COBYLA',
                               constraints=nlc)
 
@@ -146,18 +155,6 @@ class Track:
             cpoints.append(result.x)
 
         return cpoints
-
-    def closest_ellipse(self, elidict):
-        """Given a track array find closest ellipse
-        Inputs are a track array and a elipse dict
-        Returns the key of ellipse dict that corresponds to the closest ellipse"""
-        track = self.xypairs
-        xmean = np.mean([coord[0] for coord in track])
-        ymean = np.mean([coord[1] for coord in track])
-        ellipsedistance = np.array([(elidict[elikey]["x0"] - xmean) ** 2 for elikey in elidict]) + np.array(
-            [(elidict[elikey]["y0"] - ymean) ** 2 for elikey in elidict])
-        closestellipse = elidict[str(np.argmin(ellipsedistance))]  # todo check if correct
-        return closestellipse
 
     def unwrapper(self):
 
@@ -220,9 +217,10 @@ class Track:
         return zcoord
 
     def smoothing(self):
-        windowsize = int((len(self.unwrappedtrajectory)*20)//100)
+        windowsize = int((len(self.unwrappedtrajectory) * 20) // 100)
         fperi = np.convolve(self.unwrappedtrajectory, np.ones(windowsize) / windowsize, mode='valid')
         return fperi
+
 
     @staticmethod
     def objective_function(inp, *args):

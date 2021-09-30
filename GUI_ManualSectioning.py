@@ -58,10 +58,11 @@ class ManualSectioning(tk.Toplevel):
         y = self.alltracks[self.current_track].unwrappedtrajectory
         x = np.array(range(len(y))) * SR
         smoothedy = self.alltracks[self.current_track].smoothedtrajectory
+        smoothedx = np.array(range(len(smoothedy))) * SR + 0.1*x[-1]
 
         ax = fig.add_subplot()
         ax.plot(x, y, color='r')
-        ax.plot(x, smoothedy, color='k')
+        ax.plot(smoothedx, smoothedy, color='k')
         ax.set_xlabel("Time (sec)")
         ax.set_ylabel("Position (mm)")
         ax.set_title(self.alltracks[self.current_track].designator)
@@ -110,11 +111,15 @@ class ManualSectioning(tk.Toplevel):
         else:
             # Next graph
             self.current_track += 1
-            x = self.alltracks[self.current_track].timeaxis
+
+            SR = self.alltracks[self.current_track].samplerate
             y = self.alltracks[self.current_track].unwrappedtrajectory
+            x = np.array(range(len(y))) * SR
             smoothedy = self.alltracks[self.current_track].smoothedtrajectory
+            smoothedx = np.array(range(len(smoothedy))) * SR + 0.1 * x[-1]
+
             ax.plot(x, y, color='r')
-            ax.plot(x, smoothedy, color='k')
+            ax.plot(smoothedx, smoothedy, color='k')
             ax.set_xlim((-1, max(x) * 1.1))
             ax.set_ylim((min(y) * 0.9, max(y) * 1.1))
             ax.set_title(self.alltracks[self.current_track].designator)
@@ -136,8 +141,13 @@ class ManualSectioning(tk.Toplevel):
 
         for tr in self.alltracks:
             delimiter = self.findclosest_idx(self.clickdata[tr.designator], tr)
-            x = tr.timeaxis
+
+            SR = tr.samplerate
+            rawy = tr.unwrappedtrajectory
+            rawx = np.array(range(len(rawy))) * SR
             y = tr.smoothedtrajectory
+            x = np.array(range(len(y))) * SR + 0.1 * rawx[-1]
+
             if not delimiter.size:
                 m, b = self.slope(x, y)
                 self.section_velocity.append(m)
@@ -167,8 +177,13 @@ class ManualSectioning(tk.Toplevel):
         if not clickarray:
             return np.array([])
         indexes = []
+        SR = trackobject.samplerate
+        y = trackobject.unwrappedtrajectory
+        x = np.array(range(len(y))) * SR
+        smoothedy = trackobject.smoothedtrajectory
+        smoothedx = np.array(range(len(smoothedy))) * SR + 0.1*x[-1]
         for value in clickarray:
-            idx = (np.abs(trackobject.timeaxis - value)).argmin()
+            idx = (np.abs(smoothedx - value)).argmin()
             indexes.append(idx)
         return np.sort(indexes)
 

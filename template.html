@@ -1,39 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <style>
+    table { border-collapse: collapse; }
+    tr { border: none; }
+    td {
+    border-right: solid 1px;}
+    </style>
     <title>Single Particle Tracking report - generated at {{date}}</title>
 </head>
 <body>
     <h1>Single Particle Tracking report - generated at {{date}}</h1>
     <img src="data:image/png;base64, {{enconded_hist}}">
     <hr>
-
-    <p> <h2> Finite differences </h2>
-        <p>Mean {{'%0.2f'|format(finite_vel|float)}} nm/s</p>
-        <p>Std Dev {{'%0.2f'|format(finite_std|float)}} nm/s</p>
-        <p>Median {{'%0.2f'|format(finite_med|float)}} nm/s</p>
-    </p>
+    <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Manual Sectioning</th>
+        <th>MinMax Sectioning</th>
+        <th>Finite Differences</th>
+        <th>Displacement</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Mean (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_vel|float)}}</td>
+      </tr>
+      <tr>
+        <td>StdDev (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_std|float)}}</td>
+      </tr>
+      <tr>
+        <td>Median (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_med|float)}}</td>
+      </tr>
+      <tr>
+        <td>Number of points</td>
+        <td style="text-align:center">{{manual_n}}</td>
+        <td style="text-align:center">{{minmax_n}}</td>
+        <td style="text-align:center">{{finite_n}}</td>
+        <td style="text-align:center">{{disp_n}}</td>
+      </tr>
+    </tbody>
+    </table>
 
     <hr>
-    <p> <h2> MinMax sectioning </h2>
-        <p>Mean {{'%0.2f'|format(minmax_vel|float)}} nm/s</p>
-        <p>Std Dev {{'%0.2f'|format(minmax_std|float)}} nm/s</p>
-        <p>Median {{'%0.2f'|format(minmax_med|float)}} nm/s</p>
-    </p>
+    <img src="data:image/png;base64, {{enconded_tracklength}}">
+    <hr>
+    <img src="data:image/png;base64, {{enconded_diameter}}">
 
-    <hr>
-    <p> <h2> Manual sectioning </h2>
-        <p>Mean {{'%0.2f'|format(manual_vel|float)}} nm/s</p>
-        <p>Std Dev {{'%0.2f'|format(manual_std|float)}} nm/s</p>
-        <p>Median {{'%0.2f'|format(manual_med|float)}} nm/s</p>
-    </p>
-
-    <hr>
-    <p> <h2> Displacement </h2>
-        <p>Mean {{'%0.2f'|format(disp_vel|float)}} nm/s</p>
-        <p>Std Dev {{'%0.2f'|format(disp_std|float)}} nm/s</p>
-        <p>Median {{'%0.2f'|format(disp_med|float)}} nm/s</p>
-    </p>
-    <hr>
 </body>
 </html>

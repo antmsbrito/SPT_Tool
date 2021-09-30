@@ -9,7 +9,6 @@ from matplotlib import patches
 
 from tracks import Track
 
-
 # Class inheriting toplevel windows from tk
 class DrawingEllipses(tk.Toplevel):
 
@@ -42,6 +41,9 @@ class DrawingEllipses(tk.Toplevel):
         # Store currently plotted TRACK
         self.current_track = 0
 
+        # Final result
+        self.track_classes = None
+
         # Window has two frames
         self.init_plot()
         self.init_buttons()
@@ -59,7 +61,7 @@ class DrawingEllipses(tk.Toplevel):
         y = np.array(self.rawdata[self.current_track].y) / 0.08
 
         ax = fig.add_subplot()
-        ax.imshow(image, cmap="binary")
+        ax.imshow(image, cmap='gray')
         ax.plot(x, y, color='r')
         ax.set_xlabel("x coordinates (px)")
         ax.set_ylabel("y coordinates (px)")
@@ -129,37 +131,37 @@ class DrawingEllipses(tk.Toplevel):
         UNDO_button = tk.Button(master=frame_buttons, text="Undo", command=self.undo)
         UNDO_button.pack(side='left', fill='x', expand=True)
 
-        QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.quit)
+        QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.destroy)
         QUIT_button.pack(side='left', fill='x', expand=True)
 
     def nexttrack(self):
 
-        if not self.x_clicks:
+        if not self.x_clicks or not len(self.x_clicks)==3:
             return 0
 
         self.x_clicks = []
         self.y_clicks = []
 
 
-        if self.current_track + 1 == len(self.rawdata):
-            self.elidict[self.current_track]={'x0': self.x0, 'y0': self.y0, 'major': self.major, 'minor': self.minor, 'angle': self.angle}
+        if self.rawdata[-1] == self.rawdata[self.current_track]:
+            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
             self.finishup()
         else:
-
-            self.elidict[self.current_track]={'x0': self.x0, 'y0': self.y0, 'major': self.major, 'minor': self.minor, 'angle': self.angle}
-            self.redraw_graph(self.current_track + 1)
+            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.current_track += 1
+            self.redraw_graph()
 
 
     def undo(self):
         if not self.x_clicks and self.current_track > 0:
             self.current_track -= 1
-            self.redraw_graph(self.current_track)
+            self.redraw_graph()
         else:
             self.x_clicks = []
             self.y_clicks = []
-            self.redraw_graph(self.current_track)
+            self.redraw_graph()
 
-    def redraw_graph(self, desiredindex):
+    def redraw_graph(self):
         ax = self.canvas.figure.axes[0]
 
         ax.lines = []
@@ -167,26 +169,20 @@ class DrawingEllipses(tk.Toplevel):
         ax.patches = []
         ax.collections = []
 
-        if len(self.rawdata) == desiredindex + 1:
-            self.finishup()
-        else:
-            # Next graph
-            self.current_track = desiredindex
-            image = self.rawdata[self.current_track].imageobject
-            x = np.array(self.rawdata[self.current_track].x) / 0.08
-            y = np.array(self.rawdata[self.current_track].y) / 0.08
+        image = self.rawdata[self.current_track].imageobject
+        x = np.array(self.rawdata[self.current_track].x) / 0.08
+        y = np.array(self.rawdata[self.current_track].y) / 0.08
+        ax.imshow(image, cmap="gray")
+        ax.plot(x, y, color='r')
+        ax.set_xlim((np.average(x) - 30, np.average(x) + 30))
+        ax.set_ylim((np.average(y) - 30, np.average(y) + 30))
 
-            ax.imshow(image, cmap="binary")
-            ax.plot(x, y, color='r')
-
-            ax.set_xlim((np.average(x) - 30, np.average(x) + 30))
-            ax.set_ylim((np.average(y) - 30, np.average(y) + 30))
-
-            self.canvas.draw()
+        self.canvas.draw()
 
     def finishup(self):
-        track_classes = Track.generatetrack_ellipse(self.rawdata, self.elidict)
-
+        self.track_classes = Track.generatetrack_ellipse(self.rawdata, self.elidict)
+        self.quit()
+        self.destroy()
 
     @staticmethod
     def linelineintersection(pointsx, pointsy):

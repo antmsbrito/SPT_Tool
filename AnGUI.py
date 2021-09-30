@@ -1,5 +1,6 @@
 import tkinter as tk
-from Analysis import *
+
+import os
 
 from jinja2 import Template
 from datetime import datetime, date
@@ -7,7 +8,10 @@ from matplotlib import pyplot as plt
 import base64
 from io import BytesIO
 
+import numpy as np
+
 from tracks import Track
+
 
 from GUI_ManualSectioning import ManualSectioning
 
@@ -35,6 +39,10 @@ class analysisGUI(tk.Tk):
         self.finite_velo_array = np.nan
         self.displacement_velo_array = np.nan
 
+        self.savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
+        self.savepath = os.path.join(self.savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}")
+        os.makedirs(self.savepath, exist_ok=True)
+
         self.init_options()
         # self.init_stats()
 
@@ -48,12 +56,15 @@ class analysisGUI(tk.Tk):
         check_manual = tk.Checkbutton(master=options_frame, text="Manual Sectioning", variable=self.manual_var,
                                       onvalue=1, offvalue=0)
         check_manual.pack(anchor='w')
+
         check_minmax = tk.Checkbutton(master=options_frame, text="MinMax Sectioning", variable=self.minmax_var,
                                       onvalue=1, offvalue=0)
         check_minmax.pack(anchor='w')
+
         check_finite = tk.Checkbutton(master=options_frame, text="Finite Differences", variable=self.finite_var,
                                       onvalue=1, offvalue=0)
         check_finite.pack(anchor='w')
+
         check_displacement = tk.Checkbutton(master=options_frame, text="Real Displacement",
                                             variable=self.displacement_var, onvalue=1, offvalue=0)
         check_displacement.pack(anchor='w')
@@ -82,19 +93,19 @@ class analysisGUI(tk.Tk):
 
         if self.minmax_var.get():
             print("MinMax...")
-            self.minmax_velo_array = minmax(self.TrackList)
+            self.minmax_velo_array = self.build_property_array(self.TrackList, 'minmax')
             n, bins, patches = plt.hist(x=self.minmax_velo_array, bins='auto', density=True, alpha=0.1)
             plt.plot(self.buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
 
         if self.finite_var.get():
             print("Finite...")
-            self.finite_velo_array = finite(self.TrackList)
+            self.finite_velo_array = self.build_property_array(self.TrackList, 'finitediff')
             n, bins, patches = plt.hist(x=self.finite_velo_array, bins='auto', density=True, alpha=0.1)
             plt.plot(self.buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
 
         if self.displacement_var.get():
             print("Displacement...")
-            self.displacement_velo_array = displacement(self.TrackList)
+            self.displacement_velo_array = self.build_property_array(self.TrackList, 'disp')
             n, bins, patches = plt.hist(x=self.displacement_velo_array, bins='auto', density=True, alpha=0.1)
             plt.plot(self.buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
 
@@ -107,28 +118,65 @@ class analysisGUI(tk.Tk):
         fig.savefig(tmpfile, format='png')
         encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
 
+        # pandas
+        meanfd = [np.mean(i.finitediff) for i in self.TrackList]
+        meanminmax = [np.mean(i.minmax) for i in self.TrackList]
+        meandisp = [np.mean(i.disp) for i in self.TrackList]
+        tracklength = [len(i.xtrack) for i in self.TrackList]
+        diameter = [i.ellipse['major']*1000 for i in self.TrackList]
+
+        fig, ax = plt.subplots()
+        plt.scatter(tracklength, meandisp,c='g',label="Displacement")
+        plt.scatter(tracklength, meanminmax, c='b', label="MinMax")
+        plt.scatter(tracklength, meanfd, c='r', label="Finite Differences")
+        plt.xlabel("Track Length")
+        plt.ylabel("Average Velocity per track (nm/s)")
+        plt.legend()
+        plt.tight_layout
+        tmpfile = BytesIO()
+        fig.savefig(tmpfile, format='png')
+        enconded_tracklength = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+        fig, ax = plt.subplots()
+        plt.scatter(diameter, meandisp,c='g',label="Displacement")
+        plt.scatter(diameter, meanminmax, c='b', label="MinMax")
+        plt.scatter(diameter, meanfd, c='r', label="Finite Differences")
+        plt.xlabel("Major axis of ellipse (nm)")
+        plt.ylabel("Average Velocity per track (nm/s)")
+        plt.legend()
+        plt.tight_layout
+        tmpfile = BytesIO()
+        fig.savefig(tmpfile, format='png')
+        enconded_diameter = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
         print("Building .html...")
+
         report_dict = {
             "finite_vel": np.mean(self.finite_velo_array),
             "finite_std": np.std(self.finite_velo_array),
             "finite_med": np.median(self.finite_velo_array),
-            "minmax_vel": np.nanmean(self.minmax_velo_array),
-            "minmax_std": np.nanstd(self.minmax_velo_array),
-            "minmax_med": np.nanmedian(self.minmax_velo_array),
+            "finite_n": len(self.finite_velo_array),
+            "minmax_vel": np.mean(self.minmax_velo_array),
+            "minmax_std": np.std(self.minmax_velo_array),
+            "minmax_med": np.median(self.minmax_velo_array),
+            "minmax_n": len(self.minmax_velo_array),
             "manual_vel": np.mean(self.manual_velo_array),
             "manual_std": np.std(self.manual_velo_array),
             "manual_med": np.median(self.manual_velo_array),
+            "manual_n": len(self.manual_velo_array),
             "disp_vel": np.mean(self.displacement_velo_array),
             "disp_std": np.std(self.displacement_velo_array),
             "disp_med": np.median(self.displacement_velo_array),
+            "disp_n": len(self.displacement_velo_array),
             "enconded_hist": encoded,
-            "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+            "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "enconded_diameter": enconded_diameter,
+            "enconded_tracklength":enconded_tracklength}
 
         with open(r"template.html", 'r') as f:
             template = Template(f.read())
 
-
-        with open(rf"SPT_{date.today().strftime('%d_%m_%Y')}.html", 'w+') as f:
+        with open(os.path.join(self.savepath, "Summary.html"), 'w+') as f:
             f.write(template.render(report_dict))
 
         tk.messagebox.showinfo(title="All done!", message="Check for the .html file for full report")
@@ -144,3 +192,10 @@ class analysisGUI(tk.Tk):
             else:
                 centerbins.append((bins[idx + 1] + bins[idx]) / 2)
         return centerbins
+
+    @staticmethod
+    def build_property_array(trackobj,prop):
+        arr = []
+        for tr in trackobj:
+            arr = np.append(arr, getattr(tr,prop))
+        return arr

@@ -6,9 +6,9 @@ from tracks import Track
 import xml.etree.ElementTree as ET
 
 from PIL import Image
-from matplotlib import pyplot as plt
 
 from DrawingGUI import DrawingEllipses
+from AnGUI import analysisGUI
 
 
 # Class that inherits root window class from tk
@@ -79,6 +79,11 @@ class ellipseGUI(tk.Tk):
         drawing_window = DrawingEllipses(self.TrackList)
         drawing_window.grab_set()
         self.wait_window(drawing_window)
+
+        self.FinalTracks = drawing_window.track_classes
+        self.destroy()
+        analysisapp = analysisGUI(self.FinalTracks)
+        analysisapp.mainloop()
 
 
 class PrecursorTrackObject():
