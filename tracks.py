@@ -14,7 +14,7 @@ class Track:
         # Trackmate output
         self.samplerate = float(samplerate)
 
-        # Track position directly of trackmate xml
+        # Track position directly off trackmate xml
         self.xtrack = np.array(trackx)
         self.ytrack = np.array(tracky)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.xtrack, self.ytrack)])
@@ -48,6 +48,7 @@ class Track:
         # with less elements
         # In a case by case basis the samplerate is enough to define a suitable timeaxis
         # self.timeaxis = np.linspace(1, len(self.unwrappedtrajectory) * self.samplerate, len(self.unwrappedtrajectory))
+        # in case of smoothing just translate the arrays over by half the amount of the difference of points
 
         self.finitediff = finite(self)
         self.disp = displacement(self)

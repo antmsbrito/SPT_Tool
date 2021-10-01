@@ -12,6 +12,14 @@
 </head>
 <body>
     <h1>Single Particle Tracking report - generated at {{date}}</h1>
+
+    <p>Number of tracks analyzed: {{number_of_tracks}}</p>
+    <p>Average track length: {{'%0.2f'|format(average_track_length)}} points</p>
+    <p>Average total displacement (2D): {{'%0.2f'|format(average_total_2d_disp)}} nm/s</p>
+    <p>Average 2D speed: {{'%0.2f'|format(average_speed_2d)}} nm/s </p>
+
+    <hr>
+
     <img src="data:image/png;base64, {{enconded_hist}}">
     <hr>
     <table>

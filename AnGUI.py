@@ -118,12 +118,18 @@ class analysisGUI(tk.Tk):
         fig.savefig(tmpfile, format='png')
         encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
 
-        # pandas
+        # Display parameters
         meanfd = [np.mean(i.finitediff) for i in self.TrackList]
         meanminmax = [np.mean(i.minmax) for i in self.TrackList]
         meandisp = [np.mean(i.disp) for i in self.TrackList]
         tracklength = [len(i.xtrack) for i in self.TrackList]
         diameter = [i.ellipse['major']*1000 for i in self.TrackList]
+
+        number_of_tracks = len(meanfd)
+        average_track_length = np.mean(tracklength)
+        average_total_2d_disp = np.mean([np.sqrt((i.xtrack[-1]-i.xtrack[0])**2+(i.ytrack[-1]-i.ytrack[0])**2) for i in self.TrackList])
+        average_speed_2d = np.mean([i.cumvelonoz for i in self.TrackList])
+
 
         fig, ax = plt.subplots()
         plt.scatter(tracklength, meandisp,c='g',label="Displacement")
@@ -171,7 +177,11 @@ class analysisGUI(tk.Tk):
             "enconded_hist": encoded,
             "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "enconded_diameter": enconded_diameter,
-            "enconded_tracklength":enconded_tracklength}
+            "enconded_tracklength":enconded_tracklength,
+            "number_of_tracks":number_of_tracks,
+            "average_track_length":average_track_length,
+            "average_total_2d_disp":average_total_2d_disp,
+            "average_speed_2d":average_speed_2d}
 
         with open(r"template.html", 'r') as f:
             template = Template(f.read())
