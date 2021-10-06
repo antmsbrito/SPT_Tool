@@ -1,3 +1,7 @@
+"""
+SPT_Tool 2021
+Antonio Brito @ BCB lab ITQB
+"""
 
 from scipy.signal import find_peaks
 from scipy.stats import linregress
@@ -5,9 +9,10 @@ import numpy as np
 
 
 def smoothing(unsmoothed, windowsize):
-    # Helper function for displacement method
-    # Moving average smoothing
-    # Convolves with a array ones
+    """
+    Helper function for displacement method
+    Moving average leveraging 1d convolution (with array of ones)
+    """
     smoothed = np.convolve(unsmoothed, np.ones(windowsize) / windowsize, mode='valid')
     return smoothed
 
@@ -17,9 +22,10 @@ def findallpeaks(y):
     Helper function for the minmax method
 
     Calculates all minimums,maximums and inflexion points of an array. Since they are the delimiters for
-    slope calculations they ignore points at the start, end and consecutive points.
-
+    slope calculations they ignore points at the very start and at the very end.
+    Care is also taken to remove consecutive points.
     """
+
     peaks1, _ = find_peaks(y)
     peaks2, _ = find_peaks(y * -1)
     peaks = np.union1d(peaks2, peaks1)
@@ -54,29 +60,31 @@ def findallpeaks(y):
 
 
 def slope(x, y):
-    # Helper function for minmax method, calculates the slope
+    """
+    Helper function for minmax method
+    Calculates the slope of a line given x and y coordinates
+    """
     s, o, r_value, p_value, std_err = linregress(x, y)
     return s, o
 
 
 def displacement(track):
     """
-    Displacement method. For a track calculates the displacement between each point in 3D
+    Displacement method. For a given track calculates the displacement between each point in 3D
     The velocity is calculated by dividing each displacement by the sample rate and smoothing everything
     by a 30% window moving average.
     """
 
-    velo = []
     xcoord = np.diff(track.xtrack)
     ycoord = np.diff(track.ytrack)
     zcoord = np.diff(track.ztrack)
-    displacement = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
+    displacement_ = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
 
     # In reality we should be looking to regions of flatness
     # Plateaus of slope zero which indicate constant velocity
 
-    window = int((len(displacement) * 30) // 100)
-    velo = smoothing(displacement / track.samplerate, window)
+    window = int((len(displacement_) * 30) // 100)
+    velo = smoothing(displacement_ / track.samplerate, window)
 
     return velo * 1000
 

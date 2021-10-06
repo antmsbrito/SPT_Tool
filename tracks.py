@@ -6,7 +6,7 @@ from Analysis import *
 
 
 class Track:
-    def __init__(self, ellipse, trackx, tracky, samplerate, trackname):
+    def __init__(self, ellipse, trackx, tracky, samplerate, trackname, image):
 
         # Name based on file
         self.designator = trackname
@@ -19,7 +19,11 @@ class Track:
         self.ytrack = np.array(tracky)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.xtrack, self.ytrack)])
 
+        # This assumes that every track HAS to have an ellipse
         self.ellipse = ellipse
+
+        # ezrA image if it exists / is provided
+        self.image = image
 
         # Coordinates of the closest ellipse points for each track coordinate pair (x,y)
         self.ellipsepoints = self.closest_ellipse_point()
@@ -54,8 +58,6 @@ class Track:
         self.disp = displacement(self)
         self.minmax = minmax(self)
         self.manual = None
-
-
 
     def __repr__(self):
         return self.designator
@@ -99,7 +101,8 @@ class Track:
                 [(ellipsesdict[elikey]["y0"] - ymean) ** 2 for elikey in ellipsesdict])
             closestellipse = ellipsesdict[str(np.argmin(ellipsedistance))]  # todo check if correct
 
-            classlist.append(cls(closestellipse, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
+            classlist.append(
+                cls(closestellipse, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}", None))
             counter += 1
 
         return classlist
@@ -110,7 +113,8 @@ class Track:
 
         for idx, obj in enumerate(precursorobjectlist):
             eli = ellipse[idx]
-            classlist.append(cls(eli, obj.x, obj.y, obj.sr, str(obj.xml).split('/')[-1][:-4] + f"_{idx}"))
+            classlist.append(
+                cls(eli, obj.x, obj.y, obj.sr, str(obj.xml).split('/')[-1][:-4] + f"_{idx}", obj.imageobject))
 
         return classlist
 
@@ -221,7 +225,6 @@ class Track:
         windowsize = int((len(self.unwrappedtrajectory) * 20) // 100)
         fperi = np.convolve(self.unwrappedtrajectory, np.ones(windowsize) / windowsize, mode='valid')
         return fperi
-
 
     @staticmethod
     def objective_function(inp, *args):

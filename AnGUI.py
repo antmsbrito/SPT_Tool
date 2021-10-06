@@ -1,7 +1,13 @@
+"""
+SPT_Tool 2021
+Antonio Brito @ BCB lab ITQB
+"""
+
 import tkinter as tk
 
 import os
 
+import pandas as pd
 from jinja2 import Template
 from datetime import datetime, date
 from matplotlib import pyplot as plt
@@ -12,12 +18,14 @@ import numpy as np
 
 from tracks import Track
 
-
 from GUI_ManualSectioning import ManualSectioning
 
 
-# Class that inherits root window class from tk
 class analysisGUI(tk.Tk):
+    """
+    Class that inherits root window class from tk. This GUI window shows the varied 
+    """
+
     def __init__(self, tracks):
         super().__init__()  # init of tk.Tk
 
@@ -123,16 +131,16 @@ class analysisGUI(tk.Tk):
         meanminmax = [np.mean(i.minmax) for i in self.TrackList]
         meandisp = [np.mean(i.disp) for i in self.TrackList]
         tracklength = [len(i.xtrack) for i in self.TrackList]
-        diameter = [i.ellipse['major']*1000 for i in self.TrackList]
+        diameter = [i.ellipse['major'] * 1000 for i in self.TrackList]
 
         number_of_tracks = len(meanfd)
         average_track_length = np.mean(tracklength)
-        average_total_2d_disp = np.mean([np.sqrt((i.xtrack[-1]-i.xtrack[0])**2+(i.ytrack[-1]-i.ytrack[0])**2) for i in self.TrackList])
+        average_total_2d_disp = np.mean(
+            [np.sqrt((i.xtrack[-1] - i.xtrack[0]) ** 2 + (i.ytrack[-1] - i.ytrack[0]) ** 2) for i in self.TrackList])
         average_speed_2d = np.mean([i.cumvelonoz for i in self.TrackList])
 
-
         fig, ax = plt.subplots()
-        plt.scatter(tracklength, meandisp,c='g',label="Displacement")
+        plt.scatter(tracklength, meandisp, c='g', label="Displacement")
         plt.scatter(tracklength, meanminmax, c='b', label="MinMax")
         plt.scatter(tracklength, meanfd, c='r', label="Finite Differences")
         plt.xlabel("Track Length")
@@ -144,7 +152,7 @@ class analysisGUI(tk.Tk):
         enconded_tracklength = base64.b64encode((tmpfile.getvalue())).decode('utf8')
 
         fig, ax = plt.subplots()
-        plt.scatter(diameter, meandisp,c='g',label="Displacement")
+        plt.scatter(diameter, meandisp, c='g', label="Displacement")
         plt.scatter(diameter, meanminmax, c='b', label="MinMax")
         plt.scatter(diameter, meanfd, c='r', label="Finite Differences")
         plt.xlabel("Major axis of ellipse (nm)")
@@ -177,11 +185,11 @@ class analysisGUI(tk.Tk):
             "enconded_hist": encoded,
             "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "enconded_diameter": enconded_diameter,
-            "enconded_tracklength":enconded_tracklength,
-            "number_of_tracks":number_of_tracks,
-            "average_track_length":average_track_length,
-            "average_total_2d_disp":average_total_2d_disp,
-            "average_speed_2d":average_speed_2d}
+            "enconded_tracklength": enconded_tracklength,
+            "number_of_tracks": number_of_tracks,
+            "average_track_length": average_track_length,
+            "average_total_2d_disp": average_total_2d_disp,
+            "average_speed_2d": average_speed_2d}
 
         with open(r"template.html", 'r') as f:
             template = Template(f.read())
@@ -189,9 +197,25 @@ class analysisGUI(tk.Tk):
         with open(os.path.join(self.savepath, "Summary.html"), 'w+') as f:
             f.write(template.render(report_dict))
 
-        tk.messagebox.showinfo(title="All done!", message="Check for the .html file for full report")
+        tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
+
+        # What to save?
+        # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
+        np.save(f"{self.savepath}\\DataDump.npy", self.TrackList)
+        # 2 - xlsx one sheet per track with xtrack, ytrack, zellipse DONE
+        self.build_xlsx()
+        # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
+
+        # 4 - general html report DONE (above)
+
 
         self.destroy()
+
+    def build_xlsx(self):
+        with pd.ExcelWriter(f"{self.savepath}\\TrackData.xlsx") as writer:
+            for tr in self.TrackList:
+                df = pd.DataFrame({'xtrack': tr.xtrack, 'ytrack': tr.ytrack, 'zellipse': tr.ztrack})
+                df.to_excel(writer, sheet_name=tr.designator)
 
     @staticmethod
     def buildhistogram(bins):
@@ -204,8 +228,8 @@ class analysisGUI(tk.Tk):
         return centerbins
 
     @staticmethod
-    def build_property_array(trackobj,prop):
+    def build_property_array(trackobj, prop):
         arr = []
         for tr in trackobj:
-            arr = np.append(arr, getattr(tr,prop))
+            arr = np.append(arr, getattr(tr, prop))
         return arr
