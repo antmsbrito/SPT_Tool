@@ -191,7 +191,7 @@ class analysisGUI(tk.Tk):
             "average_total_2d_disp": average_total_2d_disp,
             "average_speed_2d": average_speed_2d}
 
-        with open(r"template.html", 'r') as f:
+        with open(r"templates/Summary_Template.html", 'r') as f:
             template = Template(f.read())
 
         with open(os.path.join(self.savepath, "Summary.html"), 'w+') as f:
