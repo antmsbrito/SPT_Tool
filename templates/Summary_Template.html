@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+    table { border-collapse: collapse; }
+    tr { border: none; }
+    td {
+    border-right: solid 1px;}
+    </style>
+    <title>Single Particle Tracking report - generated at {{date}}</title>
+</head>
+<body>
+    <h1>Single Particle Tracking report - generated at {{date}}</h1>
+
+    <p>Number of tracks analyzed: {{number_of_tracks}}</p>
+    <p>Average track length: {{'%0.2f'|format(average_track_length)}} points</p>
+    <p>Average total displacement (2D): {{'%0.2f'|format(average_total_2d_disp)}} nm/s</p>
+    <p>Average 2D speed: {{'%0.2f'|format(average_speed_2d)}} nm/s </p>
+
+    <hr>
+
+    <img src="data:image/png;base64, {{enconded_hist}}">
+    <hr>
+    <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Manual Sectioning</th>
+        <th>MinMax Sectioning</th>
+        <th>Finite Differences</th>
+        <th>Displacement</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Mean (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_vel|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_vel|float)}}</td>
+      </tr>
+      <tr>
+        <td>StdDev (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_std|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_std|float)}}</td>
+      </tr>
+      <tr>
+        <td>Median (nm/s)</td>
+        <td style="text-align:center">{{'%0.2f'|format(manual_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(minmax_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(finite_med|float)}}</td>
+        <td style="text-align:center">{{'%0.2f'|format(disp_med|float)}}</td>
+      </tr>
+      <tr>
+        <td>Number of points</td>
+        <td style="text-align:center">{{manual_n}}</td>
+        <td style="text-align:center">{{minmax_n}}</td>
+        <td style="text-align:center">{{finite_n}}</td>
+        <td style="text-align:center">{{disp_n}}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <hr>
+    <img src="data:image/png;base64, {{enconded_tracklength}}">
+    <hr>
+    <img src="data:image/png;base64, {{enconded_diameter}}">
+
+</body>
+</html>
