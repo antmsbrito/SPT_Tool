@@ -88,6 +88,11 @@ class analysisGUI(tk.Tk):
         stats_label.pack(side='top', fill='both')
 
     def analyze(self):
+
+        if not self.manual_var.get() and not self.minmax_var.get() and not self.finite_var.get() and not self.displacement_var.get():
+            tk.messagebox.showerror(title="Error", message="Please select at least one option")
+            return
+
         fig, ax = plt.subplots()
         print("Starting analysis")
         if self.manual_var.get():
@@ -169,19 +174,19 @@ class analysisGUI(tk.Tk):
             "finite_vel": np.mean(self.finite_velo_array),
             "finite_std": np.std(self.finite_velo_array),
             "finite_med": np.median(self.finite_velo_array),
-            "finite_n": len(self.finite_velo_array),
+            "finite_n": len(self.finite_velo_array) if isinstance(self.finite_velo_array, (list, tuple, np.ndarray)) else 0,
             "minmax_vel": np.mean(self.minmax_velo_array),
             "minmax_std": np.std(self.minmax_velo_array),
             "minmax_med": np.median(self.minmax_velo_array),
-            "minmax_n": len(self.minmax_velo_array),
+            "minmax_n":len(self.minmax_velo_array) if isinstance(self.minmax_velo_array, (list, tuple, np.ndarray)) else 0,
             "manual_vel": np.mean(self.manual_velo_array),
             "manual_std": np.std(self.manual_velo_array),
             "manual_med": np.median(self.manual_velo_array),
-            "manual_n": len(self.manual_velo_array),
+            "manual_n": len(self.manual_velo_array) if isinstance(self.manual_velo_array, (list, tuple, np.ndarray)) else 0,
             "disp_vel": np.mean(self.displacement_velo_array),
             "disp_std": np.std(self.displacement_velo_array),
             "disp_med": np.median(self.displacement_velo_array),
-            "disp_n": len(self.displacement_velo_array),
+            "disp_n": len(self.displacement_velo_array) if isinstance(self.displacement_velo_array, (list, tuple, np.ndarray)) else 0,
             "enconded_hist": encoded,
             "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "enconded_diameter": enconded_diameter,
@@ -202,11 +207,11 @@ class analysisGUI(tk.Tk):
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         np.save(f"{self.savepath}\\DataDump.npy", self.TrackList)
-        # 2 - xlsx one sheet per track with xtrack, ytrack, zellipse DONE
+        # 2 - xlsx one sheet per track with xtrack, ytrack, zellipse #TODO
 
         # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
 
-        # 4 - general html report DONE (above)
+        # 4 - general html report DONE #TODO improve it
 
 
         self.destroy()
