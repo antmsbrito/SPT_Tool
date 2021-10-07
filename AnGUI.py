@@ -203,13 +203,14 @@ class analysisGUI(tk.Tk):
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         np.save(f"{self.savepath}\\DataDump.npy", self.TrackList)
         # 2 - xlsx one sheet per track with xtrack, ytrack, zellipse DONE
-        self.build_xlsx()
+
         # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
 
         # 4 - general html report DONE (above)
 
 
         self.destroy()
+        exit()
 
     def build_xlsx(self):
         with pd.ExcelWriter(f"{self.savepath}\\TrackData.xlsx") as writer:
