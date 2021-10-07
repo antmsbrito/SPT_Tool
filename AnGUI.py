@@ -207,10 +207,8 @@ class analysisGUI(tk.Tk):
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         np.save(f"{self.savepath}\\DataDump.npy", self.TrackList)
-        # 2 - xlsx one sheet per track with xtrack, ytrack, zellipse #TODO
-
+        # 2 - xlsx one sheet per track with  #TODO
         # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
-
         # 4 - general html report DONE #TODO improve it
 
 

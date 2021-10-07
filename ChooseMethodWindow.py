@@ -6,6 +6,7 @@ Antonio Brito @ BCB lab ITQB
 import tkinter as tk
 from EllipseGUI import ellipseGUI
 from CSVGUI import csvGUI
+from loadGUI import loadGUI
 
 
 # Class that inherits root window class from tk
@@ -55,7 +56,9 @@ class ChooseWindow(tk.Tk):
         """
         Open next GUI window for inputting one or more .npy files of previously loaded data
         """
-        pass
+        self.destroy()
+        gui = loadGUI()
+        gui.mainloop()
 
 
 if __name__ == '__main__':
