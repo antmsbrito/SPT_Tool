@@ -139,7 +139,7 @@ class ManualSectioning(tk.Toplevel):
         self.quit()
         self.destroy()
 
-        for tr in self.alltracks:
+        for idx, tr in enumerate(self.alltracks):
             delimiter = self.findclosest_idx(self.clickdata[tr.designator], tr)
 
             SR = tr.samplerate
@@ -150,21 +150,25 @@ class ManualSectioning(tk.Toplevel):
 
             if not delimiter.size:
                 m, b = self.slope(x, y)
+                self.alltracks[idx].manual.append(np.abs(m)*1000)
                 self.section_velocity.append(m)
                 # plt.plot(x, x * m + b)
             else:
                 m, b = self.slope(x[0:delimiter[0]], y[0:delimiter[0]])
                 # plt.plot(x[0:delimiter[0]], x[0:delimiter[0]] * m + b)
                 self.section_velocity.append(m)
+                self.alltracks[idx].manual.append(np.abs(m)*1000)
                 for idx, d in enumerate(delimiter):
                     if d == delimiter[-1]:
                         m, b = self.slope(x[d:-1], y[d:-1])
                         # plt.plot(x[d:-1], x[d:-1] * m + b)
                         self.section_velocity.append(m)
+                        self.alltracks[idx].manual.append(np.abs(m)*1000)
                     else:
                         nextd = delimiter[idx + 1]
                         m, b = self.slope(x[d:nextd], y[d:nextd])
                         self.section_velocity.append(m)
+                        self.alltracks[idx].manual.append(np.abs(m)*1000)
                         # plt.plot(x[d:next], x[d:next] * m + b)
             # plt.show()
 

@@ -8,11 +8,7 @@ import tkinter as tk
 import os
 
 import pandas as pd
-from jinja2 import Template
-from datetime import datetime, date
-from matplotlib import pyplot as plt
-import base64
-from io import BytesIO
+from datetime import date
 
 import numpy as np
 
@@ -20,6 +16,7 @@ from tracks import Track
 
 from GUI_ManualSectioning import ManualSectioning
 
+from ReportBuilder import html_summary, npy_builder
 
 class analysisGUI(tk.Tk):
     """
@@ -93,124 +90,22 @@ class analysisGUI(tk.Tk):
             tk.messagebox.showerror(title="Error", message="Please select at least one option")
             return
 
-        fig, ax = plt.subplots()
-        print("Starting analysis")
         if self.manual_var.get():
             print("Manual...")
             TL = ManualSectioning(self.TrackList)
             TL.grab_set()
             self.wait_window(TL)
-            self.manual_velo_array = TL.section_velocity * 1000
-            n, bins, patches = plt.hist(x=self.manual_velo_array, bins='auto', density=True, alpha=0.1)
-            plt.plot(self.buildhistogram(bins), n, 'k', linewidth=1, label="Manual Sectioning")
-
-        if self.minmax_var.get():
-            print("MinMax...")
-            self.minmax_velo_array = self.build_property_array(self.TrackList, 'minmax')
-            n, bins, patches = plt.hist(x=self.minmax_velo_array, bins='auto', density=True, alpha=0.1)
-            plt.plot(self.buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
-
-        if self.finite_var.get():
-            print("Finite...")
-            self.finite_velo_array = self.build_property_array(self.TrackList, 'finitediff')
-            n, bins, patches = plt.hist(x=self.finite_velo_array, bins='auto', density=True, alpha=0.1)
-            plt.plot(self.buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
-
-        if self.displacement_var.get():
-            print("Displacement...")
-            self.displacement_velo_array = self.build_property_array(self.TrackList, 'disp')
-            n, bins, patches = plt.hist(x=self.displacement_velo_array, bins='auto', density=True, alpha=0.1)
-            plt.plot(self.buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
-
-        print("Building histogram")
-        plt.xlabel('Velocity (nm/s)')
-        plt.ylabel('PDF')
-        plt.legend()
-        plt.tight_layout()
-        tmpfile = BytesIO()
-        fig.savefig(tmpfile, format='png')
-        encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
-
-        # Display parameters
-        meanfd = [np.mean(i.finitediff) for i in self.TrackList]
-        meanminmax = [np.mean(i.minmax) for i in self.TrackList]
-        meandisp = [np.mean(i.disp) for i in self.TrackList]
-        tracklength = [len(i.xtrack) for i in self.TrackList]
-        diameter = [i.ellipse['major'] * 1000 for i in self.TrackList]
-
-        number_of_tracks = len(meanfd)
-        average_track_length = np.mean(tracklength)
-        average_total_2d_disp = np.mean(
-            [np.sqrt((i.xtrack[-1] - i.xtrack[0]) ** 2 + (i.ytrack[-1] - i.ytrack[0]) ** 2) for i in self.TrackList])
-        average_speed_2d = np.mean([i.cumvelonoz for i in self.TrackList])
-
-        fig, ax = plt.subplots()
-        plt.scatter(tracklength, meandisp, c='g', label="Displacement")
-        plt.scatter(tracklength, meanminmax, c='b', label="MinMax")
-        plt.scatter(tracklength, meanfd, c='r', label="Finite Differences")
-        plt.xlabel("Track Length")
-        plt.ylabel("Average Velocity per track (nm/s)")
-        plt.legend()
-        plt.tight_layout
-        tmpfile = BytesIO()
-        fig.savefig(tmpfile, format='png')
-        enconded_tracklength = base64.b64encode((tmpfile.getvalue())).decode('utf8')
-
-        fig, ax = plt.subplots()
-        plt.scatter(diameter, meandisp, c='g', label="Displacement")
-        plt.scatter(diameter, meanminmax, c='b', label="MinMax")
-        plt.scatter(diameter, meanfd, c='r', label="Finite Differences")
-        plt.xlabel("Major axis of ellipse (nm)")
-        plt.ylabel("Average Velocity per track (nm/s)")
-        plt.legend()
-        plt.tight_layout
-        tmpfile = BytesIO()
-        fig.savefig(tmpfile, format='png')
-        enconded_diameter = base64.b64encode((tmpfile.getvalue())).decode('utf8')
-
-        print("Building .html...")
-
-        report_dict = {
-            "finite_vel": np.mean(self.finite_velo_array),
-            "finite_std": np.std(self.finite_velo_array),
-            "finite_med": np.median(self.finite_velo_array),
-            "finite_n": len(self.finite_velo_array) if isinstance(self.finite_velo_array, (list, tuple, np.ndarray)) else 0,
-            "minmax_vel": np.mean(self.minmax_velo_array),
-            "minmax_std": np.std(self.minmax_velo_array),
-            "minmax_med": np.median(self.minmax_velo_array),
-            "minmax_n":len(self.minmax_velo_array) if isinstance(self.minmax_velo_array, (list, tuple, np.ndarray)) else 0,
-            "manual_vel": np.mean(self.manual_velo_array),
-            "manual_std": np.std(self.manual_velo_array),
-            "manual_med": np.median(self.manual_velo_array),
-            "manual_n": len(self.manual_velo_array) if isinstance(self.manual_velo_array, (list, tuple, np.ndarray)) else 0,
-            "disp_vel": np.mean(self.displacement_velo_array),
-            "disp_std": np.std(self.displacement_velo_array),
-            "disp_med": np.median(self.displacement_velo_array),
-            "disp_n": len(self.displacement_velo_array) if isinstance(self.displacement_velo_array, (list, tuple, np.ndarray)) else 0,
-            "enconded_hist": encoded,
-            "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-            "enconded_diameter": enconded_diameter,
-            "enconded_tracklength": enconded_tracklength,
-            "number_of_tracks": number_of_tracks,
-            "average_track_length": average_track_length,
-            "average_total_2d_disp": average_total_2d_disp,
-            "average_speed_2d": average_speed_2d}
-
-        with open(r"templates/Summary_Template.html", 'r') as f:
-            template = Template(f.read())
-
-        with open(os.path.join(self.savepath, "Summary.html"), 'w+') as f:
-            f.write(template.render(report_dict))
+            self.TrackList = TL.alltracks
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
 
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
-        np.save(f"{self.savepath}\\DataDump.npy", self.TrackList)
+        npy_builder(self.TrackList, self.savepath)
         # 2 - xlsx one sheet per track with  #TODO
         # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
         # 4 - general html report DONE #TODO improve it
-
+        html_summary(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
 
         self.destroy()
         exit()
@@ -221,19 +116,3 @@ class analysisGUI(tk.Tk):
                 df = pd.DataFrame({'xtrack': tr.xtrack, 'ytrack': tr.ytrack, 'zellipse': tr.ztrack})
                 df.to_excel(writer, sheet_name=tr.designator)
 
-    @staticmethod
-    def buildhistogram(bins):
-        centerbins = []
-        for idx, bini in enumerate(bins):
-            if bini == bins[-1]:
-                continue
-            else:
-                centerbins.append((bins[idx + 1] + bins[idx]) / 2)
-        return centerbins
-
-    @staticmethod
-    def build_property_array(trackobj, prop):
-        arr = []
-        for tr in trackobj:
-            arr = np.append(arr, getattr(tr, prop))
-        return arr

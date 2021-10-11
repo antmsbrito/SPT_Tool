@@ -57,7 +57,7 @@ class Track:
         self.finitediff = finite(self)
         self.disp = displacement(self)
         self.minmax = minmax(self)
-        self.manual = None
+        self.manual = []
 
     def __repr__(self):
         return self.designator

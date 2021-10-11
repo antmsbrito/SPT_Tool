@@ -36,7 +36,7 @@
     <section>
         <p><b>Number of tracks analyzed:</b> {{number_of_tracks}}</p>
         <p><b>Average track length:</b> {{'%0.2f'|format(average_track_length)}} points</p>
-        <p><b>Average total displacement (2D):</b> {{'%0.2f'|format(average_total_2d_disp)}} nm/s</p>
+        <p><b>Average total displacement (2D):</b> {{'%0.2f'|format(average_total_2d_disp)}} nm</p>
         <p><b>Average 2D speed:</b> {{'%0.2f'|format(average_speed_2d)}} nm/s </p>
     </section>
 
@@ -96,6 +96,12 @@
 
     <section>
         <img src="data:image/png;base64, {{enconded_diameter}}">
+    </section>
+
+    <hr>
+
+    <section>
+        <img src="data:image/png;base64, {{enconded_angle}}">
     </section>
 
     <a href="#top">Back to the top</a>
