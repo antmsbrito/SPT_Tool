@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from tracks import Track
 
 import numpy as np
@@ -7,8 +9,17 @@ import numpy as np
 from jinja2 import Template
 from datetime import datetime, date
 from matplotlib import pyplot as plt
+
+import seaborn as sns
+
+sns.set_theme()
+sns.set_style("white")
+sns.set_style("ticks")
+
 import base64
 from io import BytesIO
+
+from scipy.stats import mannwhitneyu
 
 
 # From an array of track objects build the report folder
@@ -36,7 +47,7 @@ def buildhistogram(bins):
     return centerbins
 
 
-def html_summary(tracklist, savepath, MANUALbool, MINMAXbool, FINITEbool, DISPbool):
+def html_summary(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
     if not MANUALbool and not MINMAXbool and not FINITEbool and not DISPbool:
         return 0
 
@@ -87,8 +98,8 @@ def html_summary(tracklist, savepath, MANUALbool, MINMAXbool, FINITEbool, DISPbo
     number_of_tracks = len(meanfd)
     average_track_length = np.mean(tracklength)
     average_total_2d_disp = np.mean(
-        [np.sqrt((i.xtrack[-1] - i.xtrack[0]) ** 2 + (i.ytrack[-1] - i.ytrack[0]) ** 2)*1000 for i in tracklist])
-    average_speed_2d = np.mean([i.cumvelonoz for i in tracklist])*1000
+        [np.sqrt((i.xtrack[-1] - i.xtrack[0]) ** 2 + (i.ytrack[-1] - i.ytrack[0]) ** 2) * 1000 for i in tracklist])
+    average_speed_2d = np.mean([i.cumvelonoz for i in tracklist]) * 1000
 
     fig, ax = plt.subplots()
     if MANUALbool or tracklist[0].manual:
@@ -160,6 +171,69 @@ def html_summary(tracklist, savepath, MANUALbool, MINMAXbool, FINITEbool, DISPbo
         "average_speed_2d": average_speed_2d}
 
     with open(r"templates/Summary_Template.html", 'r') as f:
+        template = Template(f.read())
+
+    with open(os.path.join(savepath, "Summary.html"), 'w+') as f:
+        f.write(template.render(report_dict))
+
+
+def html_comparison(listoffiles, savepath):
+    filenames = [i[0].designator[:-2] for i in listoffiles]
+
+    manual = [build_property_array(file, 'manual') for file in listoffiles]
+    displacement = [build_property_array(file, 'disp') for file in listoffiles]
+    minmax = [build_property_array(file, 'minmax') for file in listoffiles]
+    finite = [build_property_array(file, 'finitediff') for file in listoffiles]
+
+    fig, ax = plt.subplots()
+    finitedata = pd.DataFrame({'Velocity frequency (nm/s)': list(finite[0]) + list(finite[1]),
+                               'Condition': ['A'] * len(finite[0]) + ['B'] * len(finite[1])})
+    ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=finitedata)
+    plt.tight_layout()
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    enc_finite = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+    fig, ax = plt.subplots()
+    minmaxdata = pd.DataFrame({'Velocity frequency (nm/s)': list(minmax[0]) + list(minmax[1]),
+                               'Condition': ['A'] * len(minmax[0]) + ['B'] * len(minmax[1])})
+    ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=minmaxdata)
+    plt.tight_layout()
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    enc_minmax = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+    fig, ax = plt.subplots()
+    manualdata = pd.DataFrame({'Velocity frequency (nm/s)': list(manual[0]) + list(manual[1]),
+                               'Condition': ['A'] * len(manual[0]) + ['B'] * len(manual[1])})
+    ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=manualdata)
+    plt.tight_layout()
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    enc_manual = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+    fig, ax = plt.subplots()
+    dispdata = pd.DataFrame({'Velocity frequency (nm/s)': list(displacement[0]) + list(displacement[1]),
+                             'Condition': ['A'] * len(displacement[0]) + ['B'] * len(displacement[1])})
+    ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=dispdata)
+    plt.tight_layout()
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    enc_disp = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+    report_dict = {'number_of_files': len(listoffiles),
+                   'files': filenames,
+                   'mannManual': mannwhitneyu(manual[0], manual[1]).pvalue,
+                   'mannDisp': mannwhitneyu(displacement[0], displacement[1]).pvalue,
+                   'mannMinmax': mannwhitneyu(minmax[0], minmax[1]).pvalue,
+                   'mannFinite': mannwhitneyu(finite[0], finite[1]).pvalue,
+                   'enc_disp': enc_disp,
+                   'enc_manual': enc_manual,
+                   'enc_minmax': enc_minmax,
+                   'enc_finite': enc_finite,
+                   'date': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
+
+    with open(r"templates/Comparison_Template.html", 'r') as f:
         template = Template(f.read())
 
     with open(os.path.join(savepath, "Summary.html"), 'w+') as f:

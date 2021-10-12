@@ -1,7 +1,10 @@
 import tkinter as tk
-
+import os
+from datetime import date
 import numpy as np
+
 from tracks import Track
+from ReportBuilder import html_summary, html_comparison
 
 # Class that inherits root window class from tk
 class loadGUI(tk.Tk):
@@ -57,7 +60,23 @@ class loadGUI(tk.Tk):
         if not self.numberofnpy.get():
             tk.messagebox.showerror(title="NPY", message="No file loaded!")
         else:
-            pass
+            savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
+            savepath = os.path.join(savepath, rf"SPT_comparison_{date.today().strftime('%d_%m_%Y')}")
+            os.makedirs(savepath, exist_ok=True)
+
+        if self.numberofnpy.get() == 1:
+            html_summary(self.TrackObjects[0],savepath)
+            self.destroy()
+            exit()
+        if self.numberofnpy.get()==2:
+            html_comparison(self.TrackObjects, savepath)
+            self.destroy()
+            exit()
+        else:
+            tk.messagebox.showinfo("Sorry! Statistical tests on more than one sample are not implemented yet")
+            self.destroy()
+            exit()
+
 
 
 if __name__ == '__main__':

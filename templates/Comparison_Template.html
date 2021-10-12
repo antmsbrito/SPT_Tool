@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+
+    *,
+    *:before,
+    *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    }
+
+    table { border-collapse: collapse; }
+    tr { border: none; }
+    td {
+    border-right: solid 1px;}
+
+    }
+
+    </style>
+    <title>SPTtool comparison report</title>
+</head>
+
+<body id="top" style="font-family: Arial">
+    <header>
+        <h1>Single Particle Tracking comparison report</h1>
+        <h3>Generated at {{date}}</h3>
+    </header>
+
+    <section>
+        <p><b>Number of files uploaded:</b> {{number_of_files}}</p>
+        <ol type="A">
+            {% for f in files %}
+            <li>{{ f }}</li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    <hr>
+    <h3>Manual sectioning</h3>
+
+    <section>
+        <img src="data:image/png;base64, {{enc_manual}}">
+        <p>MannWhitney 2-sided U test: p-value {{mannManual}}</p>
+    </section>
+
+    <hr>
+    <h3>Minmax sectioning</h3>
+
+    <section>
+        <img src="data:image/png;base64, {{enc_minmax}}">
+        <p>MannWhitney 2-sided test: p-value {{mannMinmax}}</p>
+    </section>
+
+    <hr>
+    <h3>Finite differences</h3>
+
+    <section>
+        <img src="data:image/png;base64, {{enc_finite}}">
+        <p>MannWhitney 2-sided test: p-value {{mannFinite}}</p>
+    </section>
+
+    <hr>
+    <h3>Real displacements</h3>
+
+    <section>
+        <img src="data:image/png;base64, {{enc_disp}}">
+        <p>MannWhitney 2-sided test: p-value {{mannDisp}}</p>
+    </section>
+
+
+    <a href="#top">Back to the top</a>
+</body>
+</html>
