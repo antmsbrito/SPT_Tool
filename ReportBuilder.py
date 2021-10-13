@@ -9,7 +9,7 @@ import numpy as np
 from jinja2 import Template
 from datetime import datetime, date
 from matplotlib import pyplot as plt
-
+from matplotlib import patches
 import seaborn as sns
 
 sns.set_theme()
@@ -243,3 +243,76 @@ def html_comparison(listoffiles, savepath):
 def npy_builder(tracklist, savepath):
     np.save(f"{savepath}\\DataDump.npy", tracklist)
     return
+
+
+def makeimage(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
+    """This makes for each track an image with two plots:
+            Track overlaid with raw image (IF POSSIBLE)
+            Histogram with axvline of where it belongs (or maybe violin plot it)"""
+
+    for tr in tracklist:
+
+        plots = np.count_nonzero([MANUALbool, MINMAXbool, FINITEbool, DISPbool])
+        currentplot = plots+1
+        fig = plt.figure(figsize=(16,9))
+
+        ax1 = fig.add_subplot(2, int(plots), (1, int(plots)))
+        if tr.image:
+            ax1.imshow(tr.image, cmap='gray')
+        ax1.plot(tr.xtrack / 0.08, tr.ytrack / 0.08, color='r', label="Track")
+        eli = patches.Ellipse((tr.ellipse['x0']/0.08, tr.ellipse['y0']/0.08), tr.ellipse['major']/0.08, tr.ellipse['minor']/0.08, tr.ellipse['angle'], fill=False,
+                          edgecolor='black', alpha=0.3)
+        ax1.add_patch(eli)
+        ax1.set_xlabel("x coordinates (px)")
+        ax1.set_ylabel("y coordinates (px)")
+        ax1.set_xlim((np.average(tr.xtrack/0.08) - 30, np.average(tr.xtrack/0.08) + 30))
+        ax1.set_ylim((np.average(tr.ytrack/0.08) - 30, np.average(tr.ytrack/0.08) + 30))
+        ax1.set_aspect('equal')
+        ax1.legend()
+
+        if MANUALbool:
+            ax2 = fig.add_subplot(2, int(plots), currentplot)
+            currentplot += 1
+            manual_array = build_property_array(tracklist, 'manual')
+            n, bins, pat = ax2.hist(x=manual_array, bins='auto', density=True, alpha=0.2)
+            ax2.plot(buildhistogram(bins), n, 'k', linewidth=1, label="Manual Sectioning")
+            ax2.vlines(x=tr.manual, colors='k', ymin=0, ymax=np.max(n), alpha=0.4)
+            ax2.set_xlabel('Velocity (nm/s)')
+            ax2.set_ylabel('PDF')
+            ax2.legend()
+
+        if MINMAXbool:
+            ax3 = fig.add_subplot(2, int(plots), currentplot)
+            currentplot += 1
+            minmax_array = build_property_array(tracklist, 'minmax')
+            n, bins, pat = ax3.hist(x=minmax_array, bins='auto', density=True, alpha=0.2)
+            ax3.plot(buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
+            ax3.vlines(x=tr.minmax, colors='b', ymin=0, ymax=np.max(n), alpha=0.4)
+            ax3.set_xlabel('Velocity (nm/s)')
+            ax3.set_ylabel('PDF')
+            ax3.legend()
+
+        if FINITEbool:
+            ax4 = fig.add_subplot(2, int(plots), currentplot)
+            currentplot += 1
+            finite_array = build_property_array(tracklist, 'finitediff')
+            n, bins, pat = ax4.hist(x=finite_array, bins='auto', density=True, alpha=0.2)
+            ax4.plot(buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
+            ax4.vlines(x=tr.finitediff, ymin=0, ymax=np.max(n), colors='r', alpha=0.4)
+            ax4.set_xlabel('Velocity (nm/s)')
+            ax4.set_ylabel('PDF')
+            ax4.legend()
+
+        if DISPbool:
+            ax5 = fig.add_subplot(2, int(plots), currentplot)
+            currentplot += 1
+            disp_array = build_property_array(tracklist, 'disp')
+            n, bins, pat = ax5.hist(x=disp_array, bins='auto', density=True, alpha=0.2)
+            ax5.plot(buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
+            ax5.vlines(x=tr.disp, ymin=0, ymax=np.max(n), colors='g', alpha=0.4)
+            ax5.set_xlabel('Velocity (nm/s)')
+            ax5.set_ylabel('PDF')
+            ax5.legend()
+
+        plt.tight_layout
+        fig.savefig(os.path.join(savepath,tr.designator + '.jpeg'))
