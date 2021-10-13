@@ -27,6 +27,7 @@ class Track:
 
         # Coordinates of the closest ellipse points for each track coordinate pair (x,y)
         self.ellipsepoints = self.closest_ellipse_point()
+        self.xellipse, self.yellipse = np.array(list(zip(*self.ellipsepoints)))
 
         # Calculate Z position based upon ellipse and the projected circle of said ellipse
         self.ztrack = np.array(self.calculatez())

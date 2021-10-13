@@ -4,7 +4,8 @@ from datetime import date
 import numpy as np
 
 from tracks import Track
-from ReportBuilder import html_summary, html_comparison
+from ReportBuilder import html_summary, html_comparison, makeimage
+
 
 # Class that inherits root window class from tk
 class loadGUI(tk.Tk):
@@ -49,11 +50,10 @@ class loadGUI(tk.Tk):
         if not npy[-3:] == "npy":
             tk.messagebox.showerror(title="NPY", message="File extension must be .npy")
         else:
-            self.numberofnpy.set(self.numberofnpy.get()+1)
+            self.numberofnpy.set(self.numberofnpy.get() + 1)
             self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
             self.TrackObjects.append(np.load(npy, allow_pickle=True))
             self.filenames.append(npy)
-
 
     def analyze(self):
 
@@ -65,10 +65,11 @@ class loadGUI(tk.Tk):
             os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:
-            html_summary(self.TrackObjects[0],savepath)
+            html_summary(self.TrackObjects[0], savepath)
+            makeimage(self.TrackObjects[0], savepath)
             self.destroy()
             exit()
-        if self.numberofnpy.get()==2:
+        if self.numberofnpy.get() == 2:
             html_comparison(self.TrackObjects, savepath)
             self.destroy()
             exit()
@@ -76,7 +77,6 @@ class loadGUI(tk.Tk):
             tk.messagebox.showinfo("Sorry! Statistical tests on more than one sample are not implemented yet")
             self.destroy()
             exit()
-
 
 
 if __name__ == '__main__':

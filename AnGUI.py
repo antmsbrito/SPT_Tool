@@ -16,7 +16,7 @@ from tracks import Track
 
 from GUI_ManualSectioning import ManualSectioning
 
-from ReportBuilder import html_summary, npy_builder
+from ReportBuilder import html_summary, npy_builder, makeimage
 
 class analysisGUI(tk.Tk):
     """
@@ -97,8 +97,6 @@ class analysisGUI(tk.Tk):
             self.wait_window(TL)
             self.TrackList = TL.alltracks
 
-        tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
-
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         npy_builder(self.TrackList, self.savepath)
@@ -106,7 +104,9 @@ class analysisGUI(tk.Tk):
         # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
         # 4 - general html report DONE #TODO improve it
         html_summary(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
+        makeimage(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
 
+        tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()
         exit()
 
