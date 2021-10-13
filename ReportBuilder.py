@@ -31,10 +31,11 @@ from scipy.stats import mannwhitneyu
 
 
 def build_property_array(trackobj, prop):
-    if prop=="disp":
+    if prop == "disp":
         arr = []
         for tr in trackobj:
             arr = np.append(arr, np.mean(getattr(tr, prop)))
+        return arr
     else:
         arr = []
         for tr in trackobj:
@@ -332,20 +333,21 @@ def makeimage(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=
     for tr in tracklist:
 
         plots = np.count_nonzero([MANUALbool, MINMAXbool, FINITEbool, DISPbool])
-        currentplot = plots+1
-        fig = plt.figure(figsize=(16,9))
+        currentplot = plots + 1
+        fig = plt.figure(figsize=(16, 9))
 
         ax1 = fig.add_subplot(2, int(plots), (1, int(plots)))
         if tr.image:
             ax1.imshow(tr.image, cmap='gray')
         ax1.plot(tr.xtrack / 0.08, tr.ytrack / 0.08, color='r', label="Track")
-        eli = patches.Ellipse((tr.ellipse['x0']/0.08, tr.ellipse['y0']/0.08), tr.ellipse['major']/0.08, tr.ellipse['minor']/0.08, tr.ellipse['angle'], fill=False,
-                          edgecolor='black', alpha=0.3)
+        eli = patches.Ellipse((tr.ellipse['x0'] / 0.08, tr.ellipse['y0'] / 0.08), tr.ellipse['major'] / 0.08,
+                              tr.ellipse['minor'] / 0.08, tr.ellipse['angle'], fill=False,
+                              edgecolor='black', alpha=0.3)
         ax1.add_patch(eli)
         ax1.set_xlabel("x coordinates (px)")
         ax1.set_ylabel("y coordinates (px)")
-        ax1.set_xlim((np.average(tr.xtrack/0.08) - 30, np.average(tr.xtrack/0.08) + 30))
-        ax1.set_ylim((np.average(tr.ytrack/0.08) - 30, np.average(tr.ytrack/0.08) + 30))
+        ax1.set_xlim((np.average(tr.xtrack / 0.08) - 30, np.average(tr.xtrack / 0.08) + 30))
+        ax1.set_ylim((np.average(tr.ytrack / 0.08) - 30, np.average(tr.ytrack / 0.08) + 30))
         ax1.set_aspect('equal')
         ax1.legend()
 
@@ -394,4 +396,4 @@ def makeimage(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=
             ax5.legend()
 
         plt.tight_layout
-        fig.savefig(os.path.join(savepath,tr.designator + '.jpeg'))
+        fig.savefig(os.path.join(savepath, tr.designator + '.jpeg'))
