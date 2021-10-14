@@ -165,8 +165,8 @@ class Track:
     def unwrapper(self):
 
         # center referencial
-        x = self.xtrack - self.ellipse['x0']
-        y = self.ytrack - self.ellipse['y0']
+        x = self.xellipse - self.ellipse['x0']
+        y = self.yellipse - self.ellipse['y0']
         z = self.ztrack - 0
 
         angles_to_x = np.arctan2(y, x)
