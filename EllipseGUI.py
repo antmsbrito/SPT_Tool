@@ -3,6 +3,13 @@ import numpy as np
 
 from tracks import Track
 
+import xml.etree.ElementTree as ET
+
+from PIL import Image
+
+from DrawingGUI import DrawingEllipses
+from AnGUI import analysisGUI
+
 
 # Class that inherits root window class from tk
 class ellipseGUI(tk.Tk):
@@ -12,15 +19,15 @@ class ellipseGUI(tk.Tk):
         # Configure root window
         self.wm_title("IO Window")
         self.title("IO Window")
-        self.geometry('600x600')
+        self.geometry('350x75')
 
         # List of track related objects
         self.TrackList = []
-        self.NumberOfTracks = tk.IntVar()
+        self.NumberOfImages = tk.IntVar()
 
-        # Text for number of tracks loaded
+        # Text for number of tracks loaded and respective track name
         self.LabelText = tk.StringVar()
-        self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
+        self.LabelText.set(f"{self.NumberOfImages.get()} files loaded")
 
         # Main window has two frames
         # left side for input related stuff; right for output and
@@ -34,8 +41,8 @@ class ellipseGUI(tk.Tk):
         XML_button = tk.Button(master=frame_input, text="Load Trackmate .xml file", command=self.load_xml)
         XML_button.pack(fill='x')
 
-        # QUIT_button = tk.Button(master=frame_input, text="Quit", command=self.quit)
-        # QUIT_button.pack(side='bottom', fill='x')
+        ANALYSIS_button = tk.Button(master=frame_input, text="Draw Ellipses", command=self.drawing_button)
+        ANALYSIS_button.pack(fill='x', expand=True)
 
     def init_output(self):
         frame_output = tk.Frame(self)
@@ -44,34 +51,68 @@ class ellipseGUI(tk.Tk):
         status_text = tk.Label(master=frame_output, textvariable=self.LabelText)
         status_text.pack(side='top', fill='both')
 
-        ELLIPSE_button = tk.Button(master=frame_output, text="Draw Ellipses", command=self.draw_ellipse)
-        ELLIPSE_button.pack(side='top', fill='both')
-
-        OUTPUT_button = tk.Button(master=frame_output, text="Output", command=self.output)
-        OUTPUT_button.pack(side='top', fill='both')
 
     def load_xml(self):
 
         xml = tk.filedialog.askopenfilename(initialdir="C:", title="Select Trackmate xml file")
-
         if not xml[-3:] == "xml":
-            print("File extension not supported")
+            tk.messagebox.showerror(title="XML", message="File extension must be .xml")
         else:
-            self.TrackList = np.append(self.TrackList, Track.generatetrack(xml))
-            self.NumberOfTracks.set(len(self.TrackList))
-            self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
+            tk.messagebox.showinfo(title="Load image", message="Please load the corresponding image file")
+            image = []
+            while not image:
+                image = self.load_image(xml)
 
-    def draw_ellipse(self):
-        if self.NumberOfTracks.get() == 0:
-            print("No tracks!")
-        else:
-            newWindow = tk.Toplevel()
-            newWindow.title("Graph")
-            newWindow.geometry("600x600")
-            newWindow.grab_set()
+        self.TrackList = np.append(self.TrackList, PrecursorTrackObject.generator(xml,image))
+        self.NumberOfImages.set(len(self.TrackList))
+        self.LabelText.set(f"{self.NumberOfImages.get()} images loaded")
 
-    def output(self):
-        pass
+
+    def load_image(self, xmlpath):
+        imgdir = xmlpath
+        imgpath = tk.filedialog.askopenfilename(initialdir=imgdir, title="Select image file")
+        im = Image.open(imgpath)
+        return im
+
+    def drawing_button(self):
+
+        drawing_window = DrawingEllipses(self.TrackList)
+        drawing_window.grab_set()
+        self.wait_window(drawing_window)
+
+        self.FinalTracks = drawing_window.track_classes
+        self.destroy()
+        analysisapp = analysisGUI(self.FinalTracks)
+        analysisapp.mainloop()
+
+
+class PrecursorTrackObject():
+
+    def __init__(self, im, x, y, samplerate, xmlhandle):
+        self.imageobject = im
+        self.x = x
+        self.y = y
+        self.xml = xmlhandle
+        self.sr = samplerate
+
+    @classmethod
+    def generator(cls,xmlfile, image):
+
+        classlist = []
+        root = ET.parse(xmlfile).getroot()
+        srate = root.attrib['frameInterval']
+        counter = 0
+        for children in root:
+            tempx = []
+            tempy = []
+            for grandchildren in children:
+                tempx.append(float(grandchildren.attrib['x']))  # list of x coords
+                tempy.append(float(grandchildren.attrib['y']))  # list of y coords
+            classlist.append(cls(image, tempx, tempy,srate,xmlfile))
+            counter += 1
+        return classlist
+
+
 
 
 if __name__ == '__main__':

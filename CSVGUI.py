@@ -59,7 +59,7 @@ class csvGUI(tk.Tk):
             csv = []
             while not csv:
                 csv = self.load_csv(xml)
-            self.TrackList = np.append(self.TrackList, Track.generatetrack(xml,csv))
+            self.TrackList = np.append(self.TrackList, Track.generatetrackfromcsv(xml,csv))
             self.NumberOfTracks.set(len(self.TrackList))
             self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
 
@@ -69,6 +69,7 @@ class csvGUI(tk.Tk):
         csvpath = tk.filedialog.askopenfilename(initialdir=csvdir, title="Select ellipse CSV file")
         if not csvpath[-3:] == "csv":
             tk.messagebox.showerror(title="CSV", message="File extension must be .CSV")
+        # TODO this is a problem if one does not load a csv
         self.CurrentTrack.set("Load more tracks or start analysing")
         return csvpath
 
