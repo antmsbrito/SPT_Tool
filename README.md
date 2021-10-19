@@ -9,7 +9,7 @@
 ###### 2. Clone or Download as zip this project
 ###### 3. Open anaconda3 prompt terminal inside SPT_Tool directory
 ###### 4. Create a new environment (optional)
-###### `conda create -n env_name python=3.8.10
+###### `conda create -n env_name python=3.8.10`
 ###### 5. Activate environment (optional)
 ###### `conda activate env_name`
 ###### 6. Install requirements from file
