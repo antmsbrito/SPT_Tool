@@ -7,6 +7,7 @@ import tkinter as tk
 from EllipseGUI import ellipseGUI
 from CSVGUI import csvGUI
 from loadGUI import loadGUI
+from BatchGUI import batchGUI
 
 
 # Class that inherits root window class from tk
@@ -22,7 +23,7 @@ class ChooseWindow(tk.Tk):
 
         self.wm_title("Methods")
         self.title("Methods")
-        self.geometry('225x100')
+        self.geometry('225x125')
 
         status_text = tk.Label(master=self, text="Choose how to input ellipse data")
         status_text.pack(side='top', fill='both')
@@ -35,6 +36,9 @@ class ChooseWindow(tk.Tk):
 
         LOAD_button = tk.Button(master=self, text="Load .npy data", command=self.loadnpy)
         LOAD_button.pack(side='top', fill='both')
+
+        BATCH_button = tk.Button(master=self, text="Batch analysis", command=self.batch)
+        BATCH_button.pack(side='top', fill='both')
 
     def csv(self):
         """
@@ -58,6 +62,14 @@ class ChooseWindow(tk.Tk):
         """
         self.destroy()
         gui = loadGUI()
+        gui.mainloop()
+
+    def batch(self):
+        """
+        Opens next GUI window for batch analysis of several conditions
+        """
+        self.destroy()
+        gui = batchGUI()
         gui.mainloop()
 
 
