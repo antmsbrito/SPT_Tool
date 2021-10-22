@@ -9,6 +9,7 @@ from matplotlib import patches
 
 from tracks import Track
 
+
 # Class inheriting toplevel windows from tk
 class DrawingEllipses(tk.Toplevel):
 
@@ -43,6 +44,7 @@ class DrawingEllipses(tk.Toplevel):
 
         # Final result
         self.track_classes = None
+        self.rejects = None
 
         tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
 
@@ -142,22 +144,21 @@ class DrawingEllipses(tk.Toplevel):
         QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.destroy)
         QUIT_button.pack(side='left', fill='x', expand=True)
 
-
-
     def nexttrack(self):
 
-        if not self.x_clicks or not len(self.x_clicks)==3:
+        if not self.x_clicks or not len(self.x_clicks) == 3:
             return 0
 
         self.x_clicks = []
         self.y_clicks = []
 
-
         if self.rawdata[-1] == self.rawdata[self.current_track]:
-            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
+                                                'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}
             self.finishup()
         else:
-            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
+                                                'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}
             self.current_track += 1
             self.redraw_graph()
 
@@ -167,13 +168,12 @@ class DrawingEllipses(tk.Toplevel):
         self.y_clicks = []
 
         if self.rawdata[-1] == self.rawdata[self.current_track]:
-            self.elidict[self.current_track]= None
+            self.elidict[self.current_track] = None
             self.finishup()
         else:
-            self.elidict[self.current_track]= None
+            self.elidict[self.current_track] = None
             self.current_track += 1
             self.redraw_graph()
-
 
     def undo(self):
         if not self.x_clicks and self.current_track > 0:
@@ -204,6 +204,7 @@ class DrawingEllipses(tk.Toplevel):
 
     def finishup(self):
         self.track_classes = Track.generatetrack_ellipse(self.rawdata, self.elidict)
+        self.rejects = [r for i, r in enumerate(self.rawdata) if not self.elidict[i]]
         self.quit()
         self.destroy()
 

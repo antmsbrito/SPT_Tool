@@ -23,7 +23,7 @@ class analysisGUI(tk.Tk):
     Class that inherits root window class from tk. This GUI window shows the varied 
     """
 
-    def __init__(self, tracks):
+    def __init__(self, tracks, rejected_tracks):
         super().__init__()  # init of tk.Tk
 
         self.TrackList = tracks
@@ -33,6 +33,7 @@ class analysisGUI(tk.Tk):
         self.geometry("150x150")
 
         self.TrackList = tracks
+        self.RejectedTracks = rejected_tracks
 
         self.manual_var = tk.IntVar()
         self.minmax_var = tk.IntVar()
@@ -99,7 +100,7 @@ class analysisGUI(tk.Tk):
 
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
-        npy_builder(self.TrackList, self.savepath)
+        npy_builder(self.TrackList, self.RejectedTracks, self.savepath)
         # 4 - general html report DONE #TODO improve it
         html_summary(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
 

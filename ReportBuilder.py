@@ -54,7 +54,7 @@ def buildhistogram(bins):
     return centerbins
 
 
-def html_summary(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
+def html_summary(tracklist, rejects, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
     if not MANUALbool and not MINMAXbool and not FINITEbool and not DISPbool:
         return 0
 
@@ -172,7 +172,7 @@ def html_summary(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbo
         "enconded_diameter": enconded_diameter,
         "enconded_tracklength": enconded_tracklength,
         "enconded_angle": enconded_angle,
-        "number_of_tracks": number_of_tracks,
+        "number_of_tracks": f'{number_of_tracks} ({number_of_tracks/(number_of_tracks+len(rejects)):0.2f}%)',
         "average_track_length": average_track_length,
         "average_total_2d_disp": average_total_2d_disp,
         "average_speed_2d": average_speed_2d}
@@ -247,8 +247,9 @@ def html_comparison(listoffiles, savepath):
         f.write(template.render(report_dict))
 
 
-def npy_builder(tracklist, savepath):
+def npy_builder(tracklist, rejects, savepath):
     np.save(f"{savepath}\\DataDump.npy", tracklist)
+    np.save(f"{savepath}\\RejectedTracks.npy", rejects)
     return
 
 
