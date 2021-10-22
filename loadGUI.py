@@ -34,8 +34,8 @@ class loadGUI(tk.Tk):
         NPY_button = tk.Button(master=frame_input, text="Load .npy file", command=self.loadnpy)
         NPY_button.pack(fill='x', expand=True)
 
-        ANALYSE_button = tk.Button(master=frame_input, text="Analyze .npy files", command=self.analyze)
-        ANALYSE_button.pack(fill='x', expand=True)
+        ANALYZE_button = tk.Button(master=frame_input, text="Analyze .npy files", command=self.analyze)
+        ANALYZE_button.pack(fill='x', expand=True)
 
     def init_output(self):
         frame_output = tk.Frame(self)
@@ -61,7 +61,7 @@ class loadGUI(tk.Tk):
             tk.messagebox.showerror(title="NPY", message="No file loaded!")
         else:
             savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-            savepath = os.path.join(savepath, rf"SPT_comparison_{date.today().strftime('%d_%m_%Y')}")
+            savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
             os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:

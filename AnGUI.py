@@ -100,11 +100,8 @@ class analysisGUI(tk.Tk):
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         npy_builder(self.TrackList, self.savepath)
-        # 2 - xlsx one sheet per track with  #TODO
-        # 3 - one html per SLIDE (aka filename) showing cropped image and individual track stats #TODO
         # 4 - general html report DONE #TODO improve it
         html_summary(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
-        makeimage(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()
