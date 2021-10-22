@@ -44,6 +44,8 @@ class DrawingEllipses(tk.Toplevel):
         # Final result
         self.track_classes = None
 
+        tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
+
         # Window has two frames
         self.init_plot()
         self.init_buttons()
@@ -110,6 +112,9 @@ class DrawingEllipses(tk.Toplevel):
             if len(self.x_clicks) == 3:
                 self.minor = np.sqrt((self.x_clicks[2] - self.x0) ** 2 + (self.y_clicks[2] - self.y0) ** 2) * 2
 
+                if self.minor > self.major:
+                    self.minor, self.major = self.major, self.minor
+
                 eli = patches.Ellipse((self.x0, self.y0), self.major, self.minor, np.rad2deg(self.angle), fill=False,
                                       edgecolor='black', alpha=0.3)
                 ax.add_patch(eli)
@@ -131,8 +136,13 @@ class DrawingEllipses(tk.Toplevel):
         UNDO_button = tk.Button(master=frame_buttons, text="Undo", command=self.undo)
         UNDO_button.pack(side='left', fill='x', expand=True)
 
+        IGNORE_BUTTON = tk.Button(master=frame_buttons, text="Discart", command=self.discart)
+        IGNORE_BUTTON.pack(side='left', fill='x', expand=True)
+
         QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.destroy)
         QUIT_button.pack(side='left', fill='x', expand=True)
+
+
 
     def nexttrack(self):
 
@@ -148,6 +158,19 @@ class DrawingEllipses(tk.Toplevel):
             self.finishup()
         else:
             self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.current_track += 1
+            self.redraw_graph()
+
+    def discart(self):
+
+        self.x_clicks = []
+        self.y_clicks = []
+
+        if self.rawdata[-1] == self.rawdata[self.current_track]:
+            self.elidict[self.current_track]= None
+            self.finishup()
+        else:
+            self.elidict[self.current_track]= None
             self.current_track += 1
             self.redraw_graph()
 

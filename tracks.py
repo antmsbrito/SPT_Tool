@@ -114,8 +114,10 @@ class Track:
 
         for idx, obj in enumerate(precursorobjectlist):
             eli = ellipse[idx]
-            classlist.append(
-                cls(eli, obj.x, obj.y, obj.sr, str(obj.xml).split('/')[-1][:-4] + f"_{idx}", obj.imageobject))
+            if eli:
+                classlist.append(cls(eli, obj.x, obj.y, obj.sr, str(obj.xml).split('/')[-1][:-4] + f"_{idx}", obj.imageobject))
+            else:
+                pass
 
         return classlist
 

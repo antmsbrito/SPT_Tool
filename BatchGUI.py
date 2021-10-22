@@ -39,10 +39,14 @@ class batchGUI(tk.Tk):
                         if not os.path.exists(imgfile):
                             print(f"OOPS, the following xml file does not have an image counterpart \n {file} \n")
                         else:
-                            self.load(file, imgfile)
+                            self.load(os.path.join(root, file), imgfile)
+
+        self.drawing_button()
 
     def load(self, xml, image):
-        self.TrackList = np.append(self.TrackList, PrecursorTrackObject.generator(xml, image))
+        imgobj = Image.open(image)
+        self.TrackList = np.append(self.TrackList, PrecursorTrackObject.generator(xml, imgobj))
+        print(len(self.TrackList))
 
     def drawing_button(self):
 
