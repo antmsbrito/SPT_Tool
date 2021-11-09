@@ -18,6 +18,7 @@ from GUI_ManualSectioning import ManualSectioning
 
 from ReportBuilder import html_summary, npy_builder, makeimage
 
+
 class analysisGUI(tk.Tk):
     """
     Class that inherits root window class from tk. This GUI window shows the varied 
@@ -102,7 +103,8 @@ class analysisGUI(tk.Tk):
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
         npy_builder(self.TrackList, self.RejectedTracks, self.savepath)
         # 4 - general html report DONE #TODO improve it
-        html_summary(self.TrackList,self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(), self.displacement_var.get())
+        html_summary(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get(), self.minmax_var.get(), self.finite_var.get(),
+                     self.displacement_var.get())
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()
@@ -113,4 +115,3 @@ class analysisGUI(tk.Tk):
             for tr in self.TrackList:
                 df = pd.DataFrame({'xtrack': tr.xtrack, 'ytrack': tr.ytrack, 'zellipse': tr.ztrack})
                 df.to_excel(writer, sheet_name=tr.designator)
-

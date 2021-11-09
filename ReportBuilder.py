@@ -31,7 +31,7 @@ import pathlib
 #                     more to come...
 
 
-def build_property_array(trackobj, prop):
+def build_property_array_old(trackobj, prop):
     if prop == "disp":
         arr = []
         for tr in trackobj:
@@ -42,6 +42,23 @@ def build_property_array(trackobj, prop):
         for tr in trackobj:
             arr = np.append(arr, getattr(tr, prop))
         return arr
+
+def build_property_array(trackobj, prop):
+    if prop == "minmax":
+        arr = []
+        l = []
+        for tr in trackobj:
+            l.append(len(getattr(tr, prop)))
+            arr = np.append(arr, getattr(tr, prop))
+        print(np.mean(l))
+        return arr
+    else:
+        arr = []
+        for tr in trackobj:
+            arr = np.append(arr, np.array(np.mean(getattr(tr, prop))))
+        return arr
+
+
 
 
 def buildhistogram(bins):
@@ -54,7 +71,7 @@ def buildhistogram(bins):
     return centerbins
 
 
-def html_summary(tracklist, rejects, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
+def html_summary(tracklist, rejects, savepath, MANUALbool=False, MINMAXbool=True, FINITEbool=True, DISPbool=True):
     if not MANUALbool and not MINMAXbool and not FINITEbool and not DISPbool:
         return 0
 
@@ -101,7 +118,7 @@ def html_summary(tracklist, rejects, savepath, MANUALbool=True, MINMAXbool=True,
     meandisp = [np.mean(i.disp) for i in tracklist]
     tracklength = [len(i.xtrack) for i in tracklist]
     diameter = [i.ellipse['major'] * 1000 for i in tracklist]
-    angle = [np.rad2deg(np.cos(i.ellipse['minor'] / i.ellipse['major'])) for i in tracklist]
+    angle = [np.rad2deg(np.arccos(i.ellipse['minor'] / i.ellipse['major'])) for i in tracklist]
     number_of_tracks = len(meanfd)
     average_track_length = np.mean(tracklength)
     average_total_2d_disp = np.mean(
@@ -253,7 +270,7 @@ def npy_builder(tracklist, rejects, savepath):
     return
 
 
-def makeimage(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=True, DISPbool=True):
+def makeimage(tracklist, savepath, MANUALbool=False, MINMAXbool=True, FINITEbool=True, DISPbool=True):
     """This makes for each track an image with two plots:
             Track overlaid with raw image (IF POSSIBLE)
             Histogram with axvline of where it belongs (or maybe violin plot it)"""
@@ -324,7 +341,14 @@ def makeimage(tracklist, savepath, MANUALbool=True, MINMAXbool=True, FINITEbool=
             ax5.legend()
 
         plt.tight_layout()
-        savepath = os.path.join(savepath, tr.designator+'.jpeg')
-        checkfolder = ''.join(savepath.split['/'][:-1])
-        pathlib.Path(checkfolder).mkdir(parents=True, exist_ok=True)
-        fig.savefig(savepath)
+
+        #TODO
+        try:
+            name = tr.designator.split('\\')[-2] + '_' + tr.designator.split('\\')[-1] + '.jpeg'
+        except IndexError:
+            name = tr.designator + '.jpeg'
+
+        sv = os.path.join(savepath, name)
+        #checkfolder = ''.join(savepath.split('/')[:-1])
+        #pathlib.Path(checkfolder).mkdir(parents=True, exist_ok=True)
+        fig.savefig(sv)

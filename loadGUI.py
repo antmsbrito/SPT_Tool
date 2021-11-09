@@ -65,12 +65,12 @@ class loadGUI(tk.Tk):
             os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:
-            html_summary(self.TrackObjects[0], savepath)
+            html_summary(self.TrackObjects[0], [], savepath)
             makeimage(self.TrackObjects[0], savepath)
             self.destroy()
             exit()
         if self.numberofnpy.get() == 2:
-            html_comparison(self.TrackObjects, savepath)
+            html_comparison(self.TrackObjects, [], savepath)
             self.destroy()
             exit()
         else:
