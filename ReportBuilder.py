@@ -3,6 +3,7 @@ import os
 import pandas as pd
 
 from tracks import Track
+from Analysis import * #findallpeaks
 
 import numpy as np
 
@@ -21,7 +22,6 @@ from io import BytesIO
 
 from scipy.stats import mannwhitneyu
 
-import pathlib
 
 # From an array of track objects build the report folder
 # Input: array of tracks and folder path
@@ -43,22 +43,21 @@ def build_property_array_old(trackobj, prop):
             arr = np.append(arr, getattr(tr, prop))
         return arr
 
+
 def build_property_array(trackobj, prop):
-    if prop == "minmax":
+    if prop == "minmax" or prop == "manual":
         arr = []
         l = []
         for tr in trackobj:
             l.append(len(getattr(tr, prop)))
             arr = np.append(arr, getattr(tr, prop))
-        print(np.mean(l))
+        # print(np.mean(l), prop)
         return arr
     else:
         arr = []
         for tr in trackobj:
             arr = np.append(arr, np.array(np.mean(getattr(tr, prop))))
         return arr
-
-
 
 
 def buildhistogram(bins):
@@ -189,7 +188,7 @@ def html_summary(tracklist, rejects, savepath, MANUALbool=False, MINMAXbool=True
         "enconded_diameter": enconded_diameter,
         "enconded_tracklength": enconded_tracklength,
         "enconded_angle": enconded_angle,
-        "number_of_tracks": f'{number_of_tracks} ({number_of_tracks/(number_of_tracks+len(rejects)):0.2f}%)',
+        "number_of_tracks": f'{number_of_tracks} ({number_of_tracks / (number_of_tracks + len(rejects)):0.2f}%)',
         "average_track_length": average_track_length,
         "average_total_2d_disp": average_total_2d_disp,
         "average_speed_2d": average_speed_2d}
@@ -247,7 +246,8 @@ def html_comparison(listoffiles, savepath):
 
     report_dict = {'number_of_files': len(listoffiles),
                    'files': filenames,
-                   'mannManual': np.nan if not len(manual[0]) or not len(manual[1]) else mannwhitneyu(manual[0], manual[1]).pvalue,
+                   'mannManual': np.nan if not len(manual[0]) or not len(manual[1]) else mannwhitneyu(manual[0],
+                                                                                                      manual[1]).pvalue,
                    'mannDisp': mannwhitneyu(displacement[0], displacement[1]).pvalue,
                    'mannMinmax': mannwhitneyu(minmax[0], minmax[1]).pvalue,
                    'mannFinite': mannwhitneyu(finite[0], finite[1]).pvalue,
@@ -270,18 +270,19 @@ def npy_builder(tracklist, rejects, savepath):
     return
 
 
-def makeimage(tracklist, savepath, MANUALbool=False, MINMAXbool=True, FINITEbool=True, DISPbool=True):
+def makeimage(tracklist, savepath, MANUALbool=False, MINMAXbool=True, FINITEbool=False, DISPbool=True):
     """This makes for each track an image with two plots:
             Track overlaid with raw image (IF POSSIBLE)
-            Histogram with axvline of where it belongs (or maybe violin plot it)"""
+            Histogram with vline of where it belongs (TODO or maybe violin plot it)"""
 
     for tr in tracklist:
 
         plots = np.count_nonzero([MANUALbool, MINMAXbool, FINITEbool, DISPbool])
-        currentplot = plots + 1
+        currentplot = 5
         fig = plt.figure(figsize=(16, 9))
+        plt.suptitle(f"Disp {np.mean(tr.disp):.2f} +-{np.std(tr.disp):.2f} nm/s // MinMax Disp {np.mean(tr.minmax):.2f} +-{np.std(tr.minmax):.2f} nm/s")
 
-        ax1 = fig.add_subplot(2, int(plots), (1, int(plots)))
+        ax1 = fig.add_subplot(2, 4, (1, 2))
         if tr.image:
             ax1.imshow(tr.image, cmap='gray')
         ax1.plot(tr.xtrack / 0.08, tr.ytrack / 0.08, color='r', label="Track")
@@ -292,63 +293,91 @@ def makeimage(tracklist, savepath, MANUALbool=False, MINMAXbool=True, FINITEbool
         ax1.set_xlabel("x coordinates (px)")
         ax1.set_ylabel("y coordinates (px)")
         ax1.set_xlim((np.average(tr.xtrack / 0.08) - 30, np.average(tr.xtrack / 0.08) + 30))
-        ax1.set_ylim((np.average(tr.ytrack / 0.08) - 30, np.average(tr.ytrack / 0.08) + 30))
-        ax1.set_aspect('equal')
+        ax1.set_ylim((np.average(tr.ytrack / 0.08) - 30, np.average(tr.ytrack / 0.08) + 30)[::-1])
         ax1.legend()
 
+        ax2 = fig.add_subplot(2, 4, 3)
+        xaxis = np.linspace(1, len(tr.unwrappedtrajectory) * tr.samplerate, len(tr.unwrappedtrajectory))
+        ax2.plot(xaxis, (tr.unwrappedtrajectory-tr.unwrappedtrajectory[0]) * 1000, label="Original")
+        smoothedxaxis = np.linspace(1, len(tr.smoothedtrajectory) * tr.samplerate, len(tr.smoothedtrajectory))
+        smoothedxaxis += tr.samplerate * (len(xaxis) - len(smoothedxaxis)) / 2
+        ax2.plot(smoothedxaxis, (tr.smoothedtrajectory-tr.smoothedtrajectory[0]) * 1000, label="Smoothed")
+        delimeters = findallpeaks(tr.smoothedtrajectory)
+        if delimeters.size:
+            ax2.vlines(x=smoothedxaxis[delimeters], ymin=0, ymax=(tr.smoothedtrajectory[delimeters]-tr.smoothedtrajectory[0])*1000, colors='r', alpha=1)
+        ax2.set_xlabel("Time (sec)")
+        ax2.set_ylabel("Unwrapped trajectory (nm)")
+        ax2.legend()
+
+        ax3 = fig.add_subplot(2, 4, 4)
+        xcoord = np.diff(tr.xtrack)
+        ycoord = np.diff(tr.ytrack)
+        zcoord = np.diff(tr.ztrack)
+        displacement_ = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2) * 1000
+        xaxis = np.linspace(1, len(displacement_) * tr.samplerate, len(displacement_))
+        ax3.plot(xaxis, displacement_, label="Original")
+        smoothedxaxis = np.linspace(1, len(tr.disp) * tr.samplerate, len(tr.disp))
+        smoothedxaxis += tr.samplerate * (len(xaxis) - len(smoothedxaxis)) / 2
+        ax3.plot(smoothedxaxis, tr.disp*tr.samplerate, label="Smoothed")
+        ax3.set_xlabel("Time (sec)")
+        ax3.set_ylabel("Displacement (nm)")
+        ax3.legend()
+
         if MANUALbool:
-            ax2 = fig.add_subplot(2, int(plots), currentplot)
+            ax4 = fig.add_subplot(2, plots, currentplot)
             currentplot += 1
             manual_array = build_property_array(tracklist, 'manual')
-            n, bins, pat = ax2.hist(x=manual_array, bins='auto', density=True, alpha=0.2)
-            ax2.plot(buildhistogram(bins), n, 'k', linewidth=1, label="Manual Sectioning")
-            ax2.vlines(x=tr.manual, colors='k', ymin=0, ymax=np.max(n), alpha=0.4)
-            ax2.set_xlabel('Velocity (nm/s)')
-            ax2.set_ylabel('PDF')
-            ax2.legend()
-
-        if MINMAXbool:
-            ax3 = fig.add_subplot(2, int(plots), currentplot)
-            currentplot += 1
-            minmax_array = build_property_array(tracklist, 'minmax')
-            n, bins, pat = ax3.hist(x=minmax_array, bins='auto', density=True, alpha=0.2)
-            ax3.plot(buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
-            ax3.vlines(x=tr.minmax, colors='b', ymin=0, ymax=np.max(n), alpha=0.4)
-            ax3.set_xlabel('Velocity (nm/s)')
-            ax3.set_ylabel('PDF')
-            ax3.legend()
-
-        if FINITEbool:
-            ax4 = fig.add_subplot(2, int(plots), currentplot)
-            currentplot += 1
-            finite_array = build_property_array(tracklist, 'finitediff')
-            n, bins, pat = ax4.hist(x=finite_array, bins='auto', density=True, alpha=0.2)
-            ax4.plot(buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
-            ax4.vlines(x=tr.finitediff, ymin=0, ymax=np.max(n), colors='r', alpha=0.4)
+            n, bins, pat = ax4.hist(x=manual_array, bins='auto', density=True, alpha=0.2)
+            ax4.plot(buildhistogram(bins), n, 'k', linewidth=1, label="Manual Sectioning")
+            ax4.vlines(x=tr.manual, colors='k', ymin=0, ymax=np.max(n), alpha=0.4)
             ax4.set_xlabel('Velocity (nm/s)')
             ax4.set_ylabel('PDF')
+            ax4.set_xlim((0, 30))
             ax4.legend()
 
-        if DISPbool:
-            ax5 = fig.add_subplot(2, int(plots), currentplot)
+        if MINMAXbool:
+            ax5 = fig.add_subplot(2, 4, (5, 6))
             currentplot += 1
-            disp_array = build_property_array(tracklist, 'disp')
-            n, bins, pat = ax5.hist(x=disp_array, bins='auto', density=True, alpha=0.2)
-            ax5.plot(buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
-            ax5.vlines(x=tr.disp, ymin=0, ymax=np.max(n), colors='g', alpha=0.4)
+            minmax_array = build_property_array(tracklist, 'minmax')
+            n, bins, pat = ax5.hist(x=minmax_array, bins='auto', density=True, alpha=0.2)
+            ax5.plot(buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
+            ax5.vlines(x=tr.minmax, colors='b', ymin=0, ymax=np.max(n), alpha=0.4)
             ax5.set_xlabel('Velocity (nm/s)')
             ax5.set_ylabel('PDF')
+            ax5.set_xlim((0, 30))
             ax5.legend()
+
+        if FINITEbool:
+            ax6 = fig.add_subplot(2, 4, currentplot)
+            currentplot += 1
+            finite_array = build_property_array(tracklist, 'finitediff')
+            n, bins, pat = ax6.hist(x=finite_array, bins='auto', density=True, alpha=0.2)
+            ax6.plot(buildhistogram(bins), n, 'r', linewidth=1, label="Finite Differences")
+            ax6.vlines(x=np.mean(tr.finitediff), ymin=0, ymax=np.max(n), colors='r', alpha=0.4)
+            ax6.set_xlabel('Velocity (nm/s)')
+            ax6.set_ylabel('PDF')
+            ax6.set_xlim((0, 30))
+            ax6.legend()
+
+        if DISPbool:
+            ax7 = fig.add_subplot(2, 4, (7, 8))
+            currentplot += 1
+            disp_array = build_property_array(tracklist, 'disp')
+            n, bins, pat = ax7.hist(x=disp_array, bins='auto', density=True, alpha=0.2)
+            ax7.plot(buildhistogram(bins), n, 'g', linewidth=1, label="Displacement")
+            ax7.vlines(x=np.mean(tr.disp), ymin=0, ymax=np.max(n), colors='g', alpha=0.4)
+            ax7.set_xlabel('Velocity (nm/s)')
+            ax7.set_ylabel('PDF')
+            ax7.set_xlim((0, 30))
+            ax7.legend()
 
         plt.tight_layout()
 
-        #TODO
         try:
             name = tr.designator.split('\\')[-2] + '_' + tr.designator.split('\\')[-1] + '.jpeg'
         except IndexError:
             name = tr.designator + '.jpeg'
 
         sv = os.path.join(savepath, name)
-        #checkfolder = ''.join(savepath.split('/')[:-1])
-        #pathlib.Path(checkfolder).mkdir(parents=True, exist_ok=True)
         fig.savefig(sv)
+        plt.close(fig)

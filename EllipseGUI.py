@@ -110,6 +110,8 @@ class PrecursorTrackObject():
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
             classlist.append(cls(image, tempx, tempy,srate,xmlfile))
             counter += 1
+
+
         return classlist
 
 

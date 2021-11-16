@@ -50,7 +50,7 @@ def findallpeaks(y):
         try:
             nd = allpeaks[idx + 1]
         except IndexError:
-            continue
+            final_peaks.append(d) #continue
         if nd - d == 1:
             continue
         else:

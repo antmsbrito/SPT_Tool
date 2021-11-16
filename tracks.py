@@ -8,6 +8,8 @@ from Analysis import *
 class Track:
     def __init__(self, ellipse, trackx, tracky, samplerate, trackname, image):
 
+        # TODO check all calculation to see if they match the inverted x,y from fiji
+
         # Name based on file
         self.designator = trackname
 
