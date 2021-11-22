@@ -10,7 +10,7 @@ import numpy as np
 
 def smoothing(unsmoothed, windowsize):
     """
-    Helper function for displacement method
+    Helper function for all methods
     Moving average leveraging 1d convolution (with array of ones)
     """
     smoothed = np.convolve(unsmoothed, np.ones(windowsize) / windowsize, mode='valid')
@@ -50,7 +50,7 @@ def findallpeaks(y):
         try:
             nd = allpeaks[idx + 1]
         except IndexError:
-            final_peaks.append(d) #continue
+            final_peaks.append(d)  # continue
         if nd - d == 1:
             continue
         else:
@@ -68,27 +68,6 @@ def slope(x, y):
     return s, o
 
 
-def displacement(track):
-    """
-    Displacement method. For a given track calculates the displacement between each point in 3D
-    The velocity is calculated by dividing each displacement by the sample rate and smoothing everything
-    by a 30% window moving average.
-    """
-
-    xcoord = np.diff(track.xtrack)
-    ycoord = np.diff(track.ytrack)
-    zcoord = np.diff(track.ztrack)
-    displacement_ = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
-
-    # In reality we should be looking to regions of flatness
-    # Plateaus of slope zero which indicate constant velocity
-
-    window = int((len(displacement_) * 30) // 100)
-    velo = smoothing(displacement_ / track.samplerate, window)
-
-    return velo * 1000
-
-
 def minmax(track):
     """
     Minmax method
@@ -96,7 +75,7 @@ def minmax(track):
     """
 
     section_velocity = []
-    y = track.smoothedtrajectory
+    y = smoothing(track.unwrapped, int((len(track.unwrapped) * 20) // 100))
     x = np.array(range(len(y))) * track.samplerate
     delimiter = findallpeaks(y)
 
@@ -118,16 +97,3 @@ def minmax(track):
     section_velocity = np.abs(section_velocity)
 
     return section_velocity * 1000
-
-
-def finite(track):
-    """
-    Finite differences method
-    Self explanatory, Central differences 2nd order, 1st order for the boundaries
-    """
-    velo = []
-    y = track.smoothedtrajectory
-    x = np.array(range(len(y))) * track.samplerate
-    velo = np.append(velo, np.abs(np.gradient(y, x)))
-
-    return velo * 1000
