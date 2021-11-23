@@ -5,7 +5,6 @@ ITQB-UNL BCB 2021
 """
 
 import tkinter as tk
-import numpy as np
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
@@ -211,8 +210,9 @@ class DrawingEllipses(tk.Toplevel):
         self.canvas.draw()
 
     def finishup(self):
-        self.track_classes = TrackV2.generatetrack_ellipse(self.rawdata, self.elidict)
+        for idx, tr in enumerate(self.rawdata):
+            self.rawdata[idx].ellipse = self.elidict[idx]
+        self.track_classes = [r for i, r in enumerate(self.rawdata) if self.elidict[i]]
         self.rejects = [r for i, r in enumerate(self.rawdata) if not self.elidict[i]]
         self.quit()
         self.destroy()
-

@@ -69,7 +69,7 @@ class ManualSectioning(tk.Toplevel):
         ax.plot(smoothedx, smoothedy, color='k')
         ax.set_xlabel("Time (sec)")
         ax.set_ylabel("Position (mm)")
-        ax.set_title(self.alltracks[self.current_track].designator)
+        ax.set_title(self.alltracks[self.current_track].name)
 
         canvas.draw()
         canvas.get_tk_widget().pack(fill='both', expand=True)
@@ -101,7 +101,7 @@ class ManualSectioning(tk.Toplevel):
 
     def nexttrack(self):
         # Store previous data:
-        self.clickdata[self.alltracks[self.current_track].designator] = self.clicks
+        self.clickdata[self.alltracks[self.current_track].name] = self.clicks
 
         # reset clicks
         self.clicks = []
@@ -116,14 +116,14 @@ class ManualSectioning(tk.Toplevel):
             self.current_track += 1
 
             SR = self.alltracks[self.current_track].samplerate
-            y = self.alltracks[self.current_track].unwrappedtrajectory
+            y = self.alltracks[self.current_track].unwrapped
             x = np.array(range(len(y))) * SR
             smoothedy = smoothing(y, int((len(y) * 10) // 100))
             smoothedx = np.array(range(len(smoothedy))) * SR + 0.1 * x[-1]
 
             ax.plot(x, y, color='r')
             ax.plot(smoothedx, smoothedy, color='k')
-            ax.set_title(self.alltracks[self.current_track].designator)
+            ax.set_title(self.alltracks[self.current_track].name)
             self.canvas.draw()
 
     def undo(self):
@@ -141,11 +141,11 @@ class ManualSectioning(tk.Toplevel):
         self.destroy()
 
         for idx, tr in enumerate(self.alltracks):
-            delimiter = self.findclosest_idx(self.clickdata[tr.designator], tr)
-            self.alltracks.manual_sections = delimiter
+            delimiter = self.findclosest_idx(self.clickdata[tr.name], tr)
+            self.alltracks[idx].manual_sections = delimiter
 
             SR = tr.samplerate
-            rawy = tr.unwrappedtrajectory
+            rawy = tr.unwrapped
             rawx = np.array(range(len(rawy))) * SR
             y = smoothing(rawy, int((len(rawy) * 10) // 100))
             x = np.array(range(len(y))) * SR + 0.1 * rawx[-1]
@@ -160,14 +160,14 @@ class ManualSectioning(tk.Toplevel):
                 # plt.plot(x[0:delimiter[0]], x[0:delimiter[0]] * m + b)
                 self.section_velocity.append(m*1000)
                 self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
-                for idx, d in enumerate(delimiter):
+                for idx2, d in enumerate(delimiter):
                     if d == delimiter[-1]:
                         m, b = self.slope(x[d:-1], y[d:-1])
                         # plt.plot(x[d:-1], x[d:-1] * m + b)
                         self.section_velocity.append(m*1000)
                         self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
                     else:
-                        nextd = delimiter[idx + 1]
+                        nextd = delimiter[idx2 + 1]
                         m, b = self.slope(x[d:nextd], y[d:nextd])
                         self.section_velocity.append(m*1000)
                         self.alltracks[idx].manual_velo.append(np.abs(m)*1000)

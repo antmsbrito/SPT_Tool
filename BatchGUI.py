@@ -7,7 +7,6 @@ from tracks import *
 from PIL import Image
 
 from AnGUI import analysisGUI
-from EllipseGUI import PrecursorTrackObject
 from DrawingGUI import DrawingEllipses
 
 # Class that inherits root window class from tk
@@ -40,7 +39,7 @@ class batchGUI(tk.Tk):
 
     def load(self, xml, image):
         imgobj = Image.open(image)
-        self.TrackList = np.append(self.TrackList, PrecursorTrackObject.generator(xml, imgobj))
+        self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, imgobj))
         print(len(self.TrackList))
 
     def drawing_button(self):

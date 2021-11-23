@@ -16,49 +16,37 @@ class TrackV2:
 
     def __init__(self, im, x, y, samplerate, name, ellipse=None):
         self.imageobject = im
-        self.x = x
-        self.y = y
-
-        self.name = name
-        self.samplerate = samplerate
-
-        self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (
-                len(np.diff(self.y)) * self.samplerate)
-
-        self.ellipse = ellipse
-
+        self.x = np.array(x)
+        self.y = np.array(y)
         self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.x, self.y)])
 
-        self.xy_ellipse = self.closest_ellipse_points()
-        self.xellipse, self.yellipse = np.array(list(zip(*self.xy_ellipse)))
+        self.name = name
+        self.samplerate = float(samplerate)
 
-        self.z = self.calculatez()
+        self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (len(np.diff(self.y)) * self.samplerate)
 
-        self.unwrapped = self.unwrapper()
+        self._ellipse = ellipse
+        self.xy_ellipse = None
+        self.xellipse = None
+        self.yellipse = None
+        self.z = None
+        self.unwrapped = None
+        self.minmax_velo = None
 
-        # minmax
-        self.minmax_velo = minmax(self)
+        self.manual_sections = []
+        self.manual_velo = []
 
-        self.manual_sections = None
-        self.manual_velo = None
+    @property
+    def ellipse(self):
+        return self._ellipse
 
-    def closest_ellipse_points(self):
-
-        # Ellipse center, semi axes and angle to x axis
-        center = np.array([self.ellipse['x0'], self.ellipse['y0']])
-        smmajor = self.ellipse['major'] / 2
-        smminor = self.ellipse['minor'] / 2
-        ang = np.deg2rad(self.ellipse['angle'])
-
-        # Translate and rotate ellipse to be centered at (0,0) with major axis horizontal
-        translated = [x-center for x in self.xypairs]
-        rotated_and_translated = [self.rot2d(-1*ang).dot(t) for t in translated]
-
-        # Solve closest point problem
-        ellipsepoints = [self.solve(smmajor, smminor, point) for point in rotated_and_translated]
-
-        # Undo rotation and translation
-        return np.array([self.rot2d(ang).dot(p)+center for p in ellipsepoints])
+    @ellipse.setter
+    def ellipse(self, new_value):
+        self._ellipse = new_value
+        if new_value:
+            self.update()
+        else:
+            return
 
     @classmethod
     def generator_xml(cls, xmlfile, image):
@@ -73,7 +61,7 @@ class TrackV2:
             for grandchildren in children:
                 tempx.append(float(grandchildren.attrib['x']))  # list of x coords
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
-            classlist.append(cls(image, tempx, tempy, srate, xmlfile))
+            classlist.append(cls(image, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
         return classlist
 
@@ -117,6 +105,91 @@ class TrackV2:
             counter += 1
 
         return classlist
+
+    def update(self):
+        self.xy_ellipse = self.closest_ellipse_points()
+        self.xellipse, self.yellipse = np.array(list(zip(*self.xy_ellipse)))
+        self.z = self.calculatez()
+        self.unwrapped = self.unwrapper()
+        self.minmax_velo = minmax(self)
+        self.manual_sections = None if self.manual_sections is None else self.manual_sections
+        self.manual_velo = None if self.manual_sections is None else self.manual_sections
+
+    def closest_ellipse_points(self):
+
+        # Ellipse center, semi axes and angle to x axis
+        center = np.array([self._ellipse['x0'], self._ellipse['y0']])
+        smmajor = self._ellipse['major'] / 2
+        smminor = self._ellipse['minor'] / 2
+        ang = np.deg2rad(self._ellipse['angle'])
+
+        # Translate and rotate ellipse to be centered at (0,0) with major axis horizontal
+        translated = [x-center for x in self.xypairs]
+        rotated_and_translated = [self.rot2d(-1*ang).dot(t) for t in translated]
+
+        # Solve closest point problem
+        ellipsepoints = [self.solve(smmajor, smminor, point) for point in rotated_and_translated]
+
+        # Undo rotation and translation
+        return np.array([self.rot2d(ang).dot(p)+center for p in ellipsepoints])
+
+    def unwrapper(self):
+
+        # center referencial
+        x = self.xellipse - self._ellipse['x0']
+        y = self.yellipse - self._ellipse['y0']
+        z = self.z - 0
+
+        angles_to_x = np.arctan2(y, x)
+
+        for idx, val in enumerate(angles_to_x):
+            if 0 <= val <= np.pi:
+                continue
+            else:
+                angles_to_x[idx] = np.pi + (np.pi + val)
+
+        rawperimeter = angles_to_x * self._ellipse['major'] / 2
+
+        turns = 0
+        perimeter = []
+
+        # Wrap turns
+        for idx, val in enumerate(angles_to_x):
+            if idx == 0:
+                perimeter.append(val * self._ellipse['major'] / 2)
+            else:
+                prevval = angles_to_x[idx - 1]
+                if 0 < val < np.pi / 2 and 1.5 * np.pi < prevval < 2 * np.pi:
+                    turns += 2 * np.pi
+                    perimeter.append(val * (self._ellipse['major'] / 2) + turns * (self._ellipse['major'] / 2))
+                elif 1.5 * np.pi < val < 2 * np.pi and 0 < prevval < np.pi / 2:
+                    turns -= 2 * np.pi
+                    perimeter.append(val * (self._ellipse['major'] / 2) + turns * (self._ellipse['major'] / 2))
+                else:
+                    perimeter.append(val * (self._ellipse['major'] / 2) + turns * (self._ellipse['major'] / 2))
+
+        perimeter = np.array(perimeter)
+        rawperimeter = np.array(rawperimeter)
+
+        return perimeter
+
+    def calculatez(self):
+        radius = self._ellipse['major'] / 2
+
+        zcoord = []
+        counter = 1
+        for idx, pair in enumerate(self.xy_ellipse):
+            xdistancevector = pair[0] - self._ellipse['x0']
+            ydistancevector = pair[1] - self._ellipse['y0']
+            distance = np.linalg.norm([xdistancevector, ydistancevector])
+            sqrarg = radius ** 2 - distance ** 2
+            if sqrarg < 0:
+                sqrarg = 0
+                counter = -1
+            temporaryZ = np.array(np.sqrt(sqrarg))
+            zcoord.append(temporaryZ * counter)
+
+        return np.array(zcoord)
 
     @staticmethod
     def solve(semi_major, semi_minor, p):
@@ -164,65 +237,6 @@ class TrackV2:
     def rot2d(angle):
         s, c = np.sin(angle), np.cos(angle)
         return np.array([[c, -s], [s, c]])
-
-    def unwrapper(self):
-
-        # center referencial
-        x = self.xellipse - self.ellipse['x0']
-        y = self.yellipse - self.ellipse['y0']
-        z = self.z - 0
-
-        angles_to_x = np.arctan2(y, x)
-
-        for idx, val in enumerate(angles_to_x):
-            if 0 <= val <= np.pi:
-                continue
-            else:
-                angles_to_x[idx] = np.pi + (np.pi + val)
-
-        rawperimeter = angles_to_x * self.ellipse['major'] / 2
-
-        turns = 0
-        perimeter = []
-
-        # Wrap turns
-        for idx, val in enumerate(angles_to_x):
-            if idx == 0:
-                perimeter.append(val * self.ellipse['major'] / 2)
-            else:
-                prevval = angles_to_x[idx - 1]
-                if 0 < val < np.pi / 2 and 1.5 * np.pi < prevval < 2 * np.pi:
-                    turns += 2 * np.pi
-                    perimeter.append(val * (self.ellipse['major'] / 2) + turns * (self.ellipse['major'] / 2))
-                elif 1.5 * np.pi < val < 2 * np.pi and 0 < prevval < np.pi / 2:
-                    turns -= 2 * np.pi
-                    perimeter.append(val * (self.ellipse['major'] / 2) + turns * (self.ellipse['major'] / 2))
-                else:
-                    perimeter.append(val * (self.ellipse['major'] / 2) + turns * (self.ellipse['major'] / 2))
-
-        perimeter = np.array(perimeter)
-        rawperimeter = np.array(rawperimeter)
-
-        return perimeter
-
-    def calculatez(self):
-        radius = self.ellipse['major'] / 2
-
-        zcoord = []
-        counter = 1
-        for idx, pair in enumerate(self.xy_ellipse):
-            xdistancevector = pair[0] - self.ellipse['x0']
-            ydistancevector = pair[1] - self.ellipse['y0']
-            distance = np.linalg.norm([xdistancevector, ydistancevector])
-            sqrarg = radius ** 2 - distance ** 2
-            if sqrarg < 0:
-                sqrarg = 0
-                counter = -1
-            temporaryZ = np.array(np.sqrt(sqrarg))
-            zcoord.append(temporaryZ * counter)
-
-        return np.array(zcoord)
-
 
 
 class Track:

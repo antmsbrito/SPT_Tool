@@ -255,7 +255,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         plt.tight_layout()
 
         try:
-            name = tr.name.split('\\')[-2] + '_' + tr.name.split('\\')[-1] + '.jpeg'
+            name = tr.name.split('/')[-2] + '_' + tr.name.split('/')[-1] + '.jpeg'
         except IndexError:
             name = tr.name + '.jpeg'
         sv = os.path.join(savepath, name)
