@@ -1,13 +1,18 @@
+"""
+SPT_TOOL
+@author António Brito
+ITQB-UNL BCB 2021
+"""
+
 import tkinter as tk
 import numpy as np
-import pandas as pd
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib import patches
 
-from tracks import Track
+from tracks import *
 
 
 # Class inheriting toplevel windows from tk
@@ -46,11 +51,11 @@ class DrawingEllipses(tk.Toplevel):
         self.track_classes = None
         self.rejects = None
 
-        tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
-
         # Window has two frames
         self.init_plot()
         self.init_buttons()
+
+        tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
 
     def init_plot(self):
         frame_plot = tk.Frame(self)
@@ -61,8 +66,8 @@ class DrawingEllipses(tk.Toplevel):
         self.canvas = FigureCanvasTkAgg(fig, master=frame_plot)
 
         image = self.rawdata[self.current_track].imageobject
-        x = np.array(self.rawdata[self.current_track].x) / 0.08
-        y = np.array(self.rawdata[self.current_track].y) / 0.08
+        x = np.array(self.rawdata[self.current_track].x) / 0.08  # TODO UM TO NM
+        y = np.array(self.rawdata[self.current_track].y) / 0.08  # TODO UM TO NM
 
         ax = fig.add_subplot()
         ax.imshow(image, cmap='gray')
@@ -84,6 +89,7 @@ class DrawingEllipses(tk.Toplevel):
 
     def clickGraph(self, event):
         if event.inaxes is not None:
+            print(event.xdata, event.ydata)
             ax = self.canvas.figure.axes[0]
 
             xclick = event.xdata
@@ -117,6 +123,7 @@ class DrawingEllipses(tk.Toplevel):
                 if self.minor > self.major:
                     self.minor, self.major = self.major, self.minor
 
+                # TODO recheck angle for the 1000 time just to be sure
                 eli = patches.Ellipse((self.x0, self.y0), self.major, self.minor, np.rad2deg(self.angle), fill=False,
                                       edgecolor='black', alpha=0.3)
                 ax.add_patch(eli)
@@ -138,7 +145,7 @@ class DrawingEllipses(tk.Toplevel):
         UNDO_button = tk.Button(master=frame_buttons, text="Undo", command=self.undo)
         UNDO_button.pack(side='left', fill='x', expand=True)
 
-        IGNORE_BUTTON = tk.Button(master=frame_buttons, text="Discart", command=self.discart)
+        IGNORE_BUTTON = tk.Button(master=frame_buttons, text="Discart", command=self.discard)
         IGNORE_BUTTON.pack(side='left', fill='x', expand=True)
 
         QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.destroy)
@@ -152,6 +159,7 @@ class DrawingEllipses(tk.Toplevel):
         self.x_clicks = []
         self.y_clicks = []
 
+        #  Check if we have more tracks other wise finish up the gui
         if self.rawdata[-1] == self.rawdata[self.current_track]:
             self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
                                                 'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}
@@ -162,7 +170,7 @@ class DrawingEllipses(tk.Toplevel):
             self.current_track += 1
             self.redraw_graph()
 
-    def discart(self):
+    def discard(self):
 
         self.x_clicks = []
         self.y_clicks = []
@@ -203,25 +211,8 @@ class DrawingEllipses(tk.Toplevel):
         self.canvas.draw()
 
     def finishup(self):
-        self.track_classes = Track.generatetrack_ellipse(self.rawdata, self.elidict)
+        self.track_classes = TrackV2.generatetrack_ellipse(self.rawdata, self.elidict)
         self.rejects = [r for i, r in enumerate(self.rawdata) if not self.elidict[i]]
         self.quit()
         self.destroy()
 
-    @staticmethod
-    def linelineintersection(pointsx, pointsy):
-        # Instead of deriving the equation for the intersection of two lines i borrowed it from
-        # https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-
-        denominator = (pointsx[0] - pointsx[1]) * (pointsy[2] - pointsy[3]) - (pointsy[0] - pointsy[1]) * (
-                pointsx[2] - pointsx[3])
-
-        px = (pointsx[0] * pointsy[1] - pointsy[0] * pointsx[1]) * (pointsx[2] - pointsx[3]) - (
-                pointsx[0] - pointsx[1]) * (pointsx[2] * pointsy[3] - pointsy[2] * pointsx[3])
-        px = px / denominator
-
-        py = (pointsx[0] * pointsy[1] - pointsy[0] * pointsx[1]) * (pointsy[2] - pointsy[3]) - (
-                pointsy[0] - pointsy[1]) * (pointsx[2] * pointsy[3] - pointsy[2] * pointsx[3])
-        py = py / denominator
-
-        return px, py

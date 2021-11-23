@@ -20,7 +20,10 @@ class TrackV2:
         self.y = y
 
         self.name = name
-        self.sr = samplerate
+        self.samplerate = samplerate
+
+        self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (
+                len(np.diff(self.y)) * self.samplerate)
 
         self.ellipse = ellipse
 
@@ -31,10 +34,10 @@ class TrackV2:
 
         self.z = self.calculatez()
 
-        self.unwrapped = self.unwrapping()
+        self.unwrapped = self.unwrapper()
 
         # minmax
-        self.minmax_velo = minmax()
+        self.minmax_velo = minmax(self)
 
         self.manual_sections = None
         self.manual_velo = None
@@ -167,7 +170,7 @@ class TrackV2:
         # center referencial
         x = self.xellipse - self.ellipse['x0']
         y = self.yellipse - self.ellipse['y0']
-        z = self.ztrack - 0
+        z = self.z - 0
 
         angles_to_x = np.arctan2(y, x)
 
@@ -207,7 +210,7 @@ class TrackV2:
 
         zcoord = []
         counter = 1
-        for idx, pair in enumerate(self.ellipsepoints):
+        for idx, pair in enumerate(self.xy_ellipse):
             xdistancevector = pair[0] - self.ellipse['x0']
             ydistancevector = pair[1] - self.ellipse['y0']
             distance = np.linalg.norm([xdistancevector, ydistancevector])
@@ -218,11 +221,11 @@ class TrackV2:
             temporaryZ = np.array(np.sqrt(sqrarg))
             zcoord.append(temporaryZ * counter)
 
-        return zcoord
+        return np.array(zcoord)
 
 
 
-class OldTrack:
+class Track:
     def __init__(self, ellipse, trackx, tracky, samplerate, trackname, image):
 
         # Name based on file

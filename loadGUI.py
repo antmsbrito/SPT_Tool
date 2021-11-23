@@ -1,10 +1,16 @@
-import tkinter as tk
-import os
-from datetime import date
-import numpy as np
+"""
+SPT_TOOL
+@author António Brito
+ITQB-UNL BCB 2021
+"""
 
-from tracks import Track
-from ReportBuilder import html_summary, html_comparison, makeimage
+import os
+import tkinter as tk
+from datetime import date
+
+import numpy as np
+from tracks import *
+from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
 
 
 # Class that inherits root window class from tk
@@ -52,7 +58,10 @@ class loadGUI(tk.Tk):
         else:
             self.numberofnpy.set(self.numberofnpy.get() + 1)
             self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
-            self.TrackObjects.append(np.load(npy, allow_pickle=True))
+            objs = np.load(npy, allow_pickle=True)
+            if isinstance(objs[0], Track):
+                newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
+            self.TrackObjects.append(newObjects)
             self.filenames.append(npy)
 
     def analyze(self):
@@ -65,8 +74,10 @@ class loadGUI(tk.Tk):
             os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:
-            html_summary(self.TrackObjects[0], [], savepath)
-            makeimage(self.TrackObjects[0], savepath)
+            manual = True if self.TrackObjects[0][0].manual_velo else False
+            html_summary(self.TrackObjects[0], [], savepath, manual)
+            makeimage(self.TrackObjects[0], savepath, manual)
+            npy_builder(self.TrackObjects[0], None, savepath)
             self.destroy()
             exit()
         if self.numberofnpy.get() == 2:

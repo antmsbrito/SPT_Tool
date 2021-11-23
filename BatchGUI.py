@@ -2,18 +2,13 @@ import tkinter as tk
 import os
 import numpy as np
 
-from tracks import Track
-
-import xml.etree.ElementTree as ET
+from tracks import *
 
 from PIL import Image
 
 from AnGUI import analysisGUI
-
 from EllipseGUI import PrecursorTrackObject
-
 from DrawingGUI import DrawingEllipses
-
 
 # Class that inherits root window class from tk
 class batchGUI(tk.Tk):
