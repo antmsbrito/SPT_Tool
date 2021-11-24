@@ -198,7 +198,7 @@ def makeimage(tracklist, savepath, MANUALbool):
 
         fig = plt.figure(figsize=(16, 9))
 
-        ax1 = fig.add_subplot(2, 3, (1,2))
+        ax1 = fig.add_subplot(2, 3, 1)
 
         if tr.imageobject:
             ax1.imshow(tr.imageobject, cmap='gray')
@@ -217,7 +217,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax1.set_aspect('equal')
         ax1.legend()
 
-        ax2 = fig.add_subplot(2, 3, 3)
+        ax2 = fig.add_subplot(2, 3, 2)
         xaxis = np.linspace(1, len(tr.unwrapped) * tr.samplerate, len(tr.unwrapped))
         ax2.plot(xaxis, (tr.unwrapped - tr.unwrapped[0]) * 1000, label="Original")
         sm = smoothing(tr.unwrapped, int((len(tr.unwrapped) * 20) // 100))
@@ -230,6 +230,16 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax2.set_xlabel("Time (sec)")
         ax2.set_ylabel("Unwrapped trajectory (nm)")
         ax2.legend()
+
+        ax3 = fig.add_subplot(2, 3, 3)
+        xaxis = np.linspace(1, len(tr.unwrapped) * tr.samplerate, len(tr.unwrapped))
+        yaxis = np.linalg.norm(tr.xypairs - tr.xy_ellipse, axis=1) * 1000
+        ax3.plot(xaxis, yaxis)
+        average_dist = np.mean(yaxis)
+        ax3.axhline(y=average_dist, label="Average")
+        ax3.set_xlabel('Time (seconds)')
+        ax3.set_ylabel('Distance to the ellipse (nm)')
+        ax3.legend()
 
         if MANUALbool:
             ax4 = fig.add_subplot(2, 3, 4)
@@ -252,10 +262,20 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax5.set_xlim((0, 30))
         ax5.legend()
 
+        ax6 = fig.add_subplot(2, 3, 6)
+        avgminmax = np.mean(tr.minmax_velo)
+        avgmanual = np.mean(tr.manual_velo) if not np.array(tr.manual_velo).size == 0 else 0.0
+        rawtxt = '\n'.join((f'MinMax average = {avgminmax:.2f} nm/s',
+                            f'Manual average = {avgmanual:.2f} nm/s',
+                            f'Average distance to ellipse {average_dist:.2f} nm'))
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        ax6.text(0.5, 0.5, rawtxt, fontsize=14, verticalalignment='top', bbox=props)
+        ax6.axis('off')
+
         plt.tight_layout()
 
         try:
-            name = tr.name.split('/')[-2] + '_' + tr.name.split('/')[-1] + '.jpeg'
+            name = tr.name.split(os.sep)[-2] + '_' + tr.name.split(os.sep)[-1] + '.jpeg'
         except IndexError:
             name = tr.name + '.jpeg'
         sv = os.path.join(savepath, name)

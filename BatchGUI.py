@@ -40,7 +40,7 @@ class batchGUI(tk.Tk):
     def load(self, xml, image):
         imgobj = Image.open(image)
         self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, imgobj))
-        print(len(self.TrackList))
+        print(len(self.TrackList), xml)
 
     def drawing_button(self):
 

@@ -36,6 +36,9 @@ class TrackV2:
         self.manual_sections = []
         self.manual_velo = []
 
+        if self._ellipse is not None:
+            self.update()
+
     @property
     def ellipse(self):
         return self._ellipse
@@ -112,8 +115,8 @@ class TrackV2:
         self.z = self.calculatez()
         self.unwrapped = self.unwrapper()
         self.minmax_velo = minmax(self)
-        self.manual_sections = None if self.manual_sections is None else self.manual_sections
-        self.manual_velo = None if self.manual_sections is None else self.manual_sections
+        self.manual_sections = [] if not self.manual_sections else self.manual_sections
+        self.manual_velo = [] if not self.manual_sections else self.manual_sections
 
     def closest_ellipse_points(self):
 
