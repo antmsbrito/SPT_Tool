@@ -119,6 +119,18 @@ def html_summary(tracklist, rejects, savepath, manualBool):
     fig.savefig(tmpfile, format='png')
     enconded_angle = base64.b64encode((tmpfile.getvalue())).decode('utf8')
 
+    fig, ax = plt.subplots()
+    distance = [np.mean(np.linalg.norm(tr.xypairs - tr.xy_ellipse, axis=1) * 1000) for tr in tracklist]
+    n, bins, patches = plt.hist(x=distance, bins='auto', density=True, alpha=0.1)
+    plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="Average distance")
+    plt.xlabel("Distance to the ellipse (average per track) nm/s")
+    plt.ylabel("PDF")
+    plt.legend()
+    plt.tight_layout()
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    enconded_ellipse = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
     report_dict = {
         "minmax_vel": np.mean(minmax_array),
         "minmax_std": np.std(minmax_array),
@@ -130,6 +142,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
         "manual_n": len(manual_array) if isinstance(manual_array, (list, tuple, np.ndarray)) else 0,
         "enconded_hist": encoded,
         "date": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "enconded_ellipsedistance": enconded_ellipse,
         "enconded_diameter": enconded_diameter,
         "enconded_tracklength": enconded_tracklength,
         "enconded_angle": enconded_angle,
