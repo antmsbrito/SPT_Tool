@@ -14,6 +14,8 @@ import seaborn as sns
 from jinja2 import Template
 from matplotlib import patches
 from matplotlib import pyplot as plt
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap, BoundaryNorm
 
 sns.set_theme()
 sns.set_style("white")
@@ -21,7 +23,6 @@ sns.set_style("ticks")
 
 from scipy.stats import mannwhitneyu
 
-from Analysis import *
 from tracks import *
 
 
@@ -212,12 +213,21 @@ def makeimage(tracklist, savepath, MANUALbool):
         fig = plt.figure(figsize=(16, 9))
 
         ax1 = fig.add_subplot(2, 3, 1)
-
         if tr.imageobject:
             ax1.imshow(tr.imageobject, cmap='gray')
         ax1.plot(tr.x / 0.08, tr.y / 0.08, color='b', label="Track")
 
-        ax1.plot(tr.xellipse / 0.08, tr.yellipse / 0.08, color='r', label="Ellipse Points")
+        xeli, yeli = tr.xellipse/0.08, tr.yellipse/0.08
+        cumulative_disp = np.cumsum(np.sqrt(np.diff(xeli) ** 2 + np.diff(yeli) ** 2))
+        points = np.array([xeli, yeli]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        norm = plt.Normalize(cumulative_disp.min(), cumulative_disp.max())
+        lc = LineCollection(segments, cmap='rainbow', norm=norm)
+        lc.set_array(cumulative_disp)
+        lc.set_linewidth(2)
+        line = ax1.add_collection(lc)
+        # fig.colorbar(line, ax=ax1, label="Total distance traveled (nm)")
+        # ax1.plot(tr.xellipse / 0.08, tr.yellipse / 0.08, color='r', label="Ellipse Points")
 
         eli = patches.Ellipse((tr.ellipse['x0'] / 0.08, tr.ellipse['y0'] / 0.08), tr.ellipse['major'] / 0.08,
                               tr.ellipse['minor'] / 0.08, tr.ellipse['angle'], fill=False,
