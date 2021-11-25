@@ -51,7 +51,6 @@ def buildhistogram(bins):
 
 def html_summary(tracklist, rejects, savepath, manualBool):
     manual_array = 0
-    minmax_array = 0
 
     fig, ax = plt.subplots()
 
@@ -147,7 +146,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
         "enconded_diameter": enconded_diameter,
         "enconded_tracklength": enconded_tracklength,
         "enconded_angle": enconded_angle,
-        "number_of_tracks": f'{len(tracklist)} ({len(tracklist) / (len(tracklist) + len(rejects)):0.2f}%)',
+        "number_of_tracks": f'{len(tracklist)} ({len(tracklist) * 100 / (len(tracklist) + len(rejects)):0.2f}%)',
         "average_track_length": average_track_length,
         "average_total_2d_disp": average_total_2d_disp,
         "average_speed_2d": average_speed_2d}
@@ -218,7 +217,8 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax1.plot(tr.x / 0.08, tr.y / 0.08, color='b', label="Track")
 
         xeli, yeli = tr.xellipse/0.08, tr.yellipse/0.08
-        cumulative_disp = np.cumsum(np.sqrt(np.diff(xeli) ** 2 + np.diff(yeli) ** 2))
+        # https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
+        cumulative_disp = np.cumsum(np.sqrt(np.diff(xeli*0.08*1000) ** 2 + np.diff(yeli*0.08*1000) ** 2))
         points = np.array([xeli, yeli]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
         norm = plt.Normalize(cumulative_disp.min(), cumulative_disp.max())
@@ -290,9 +290,12 @@ def makeimage(tracklist, savepath, MANUALbool):
         avgmanual = np.mean(tr.manual_velo) if not np.array(tr.manual_velo).size == 0 else 0.0
         rawtxt = '\n'.join((f'MinMax average = {avgminmax:.2f} nm/s',
                             f'Manual average = {avgmanual:.2f} nm/s',
-                            f'Average distance to ellipse {average_dist:.2f} nm'))
+                            f'Average distance to ellipse {average_dist:.2f} nm',
+                            f'Total distance traveled {cumulative_disp[-1]:.2f} nm',
+                            f'Total displacement {np.sqrt((xeli[-1]-xeli[0])**2+(yeli[-1]-yeli[0])**2)*0.08*1000:.2f} nm'))
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        ax6.text(0.5, 0.5, rawtxt, fontsize=14, verticalalignment='top', bbox=props)
+        ax6.text(0, 0, rawtxt, fontsize=20, bbox=props)
+        ax6.set_ylim((0,0.4))
         ax6.axis('off')
 
         plt.tight_layout()
