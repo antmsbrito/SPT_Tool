@@ -159,7 +159,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
 
 
 def html_comparison(listoffiles, savepath):
-    filenames = [i[0].designator[:-2] for i in listoffiles]
+    filenames = [i[0].name[:-2] for i in listoffiles]
 
     manual = [build_property_array(file, 'manual_velo') for file in listoffiles]
     minmax = [build_property_array(file, 'minmax_velo') for file in listoffiles]
@@ -173,14 +173,18 @@ def html_comparison(listoffiles, savepath):
     fig.savefig(tmpfile, format='png')
     enc_minmax = base64.b64encode((tmpfile.getvalue())).decode('utf8')
 
-    fig, ax = plt.subplots()
-    manualdata = pd.DataFrame({'Velocity frequency (nm/s)': list(manual[0]) + list(manual[1]),
-                               'Condition': ['A'] * len(manual[0]) + ['B'] * len(manual[1])})
-    ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=manualdata)
-    plt.tight_layout()
-    tmpfile = BytesIO()
-    fig.savefig(tmpfile, format='png')
-    enc_manual = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+
+    if manual[0]:
+        fig, ax = plt.subplots()
+        manualdata = pd.DataFrame({'Velocity frequency (nm/s)': list(manual[0]) + list(manual[1]),
+                                   'Condition': ['A'] * len(manual[0]) + ['B'] * len(manual[1])})
+        ax = sns.violinplot(x='Condition', y='Velocity frequency (nm/s)', data=manualdata)
+        plt.tight_layout()
+        tmpfile = BytesIO()
+        fig.savefig(tmpfile, format='png')
+        enc_manual = base64.b64encode((tmpfile.getvalue())).decode('utf8')
+    else:
+        enc_manual = 0
 
     report_dict = {'number_of_files': len(listoffiles),
                    'files': filenames,
@@ -244,7 +248,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         xaxis = np.linspace(1, len(tr.unwrapped) * tr.samplerate, len(tr.unwrapped))
         ax2.plot(xaxis, (tr.unwrapped - tr.unwrapped[0]) * 1000, label="Original")
         sm = smoothing(tr.unwrapped, int((len(tr.unwrapped) * 20) // 100))
-        smoothedxaxis = np.linspace(1, len(sm) * tr.samplerate, len(sm))
+        smoothedxaxis = np.linspace(1, len(sm) * tr.samplerate, len(sm))    
         smoothedxaxis += tr.samplerate * (len(xaxis) - len(smoothedxaxis)) / 2
         ax2.plot(smoothedxaxis, (sm - sm[0]) * 1000, label="Smoothed")
         delimeters = findallpeaks(sm)

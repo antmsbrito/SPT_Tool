@@ -62,7 +62,7 @@ class ManualSectioning(tk.Toplevel):
         y = self.alltracks[self.current_track].unwrapped
         x = np.array(range(len(y))) * SR
         smoothedy = smoothing(y, int((len(y) * 10) // 100))
-        smoothedx = np.array(range(len(smoothedy))) * SR + 0.1*x[-1]
+        smoothedx = np.array(range(len(smoothedy))) * SR + 0.05*x[-1]
 
         ax = fig.add_subplot()
         ax.plot(x, y, color='r')
@@ -119,7 +119,7 @@ class ManualSectioning(tk.Toplevel):
             y = self.alltracks[self.current_track].unwrapped
             x = np.array(range(len(y))) * SR
             smoothedy = smoothing(y, int((len(y) * 10) // 100))
-            smoothedx = np.array(range(len(smoothedy))) * SR + 0.1 * x[-1]
+            smoothedx = np.array(range(len(smoothedy))) * SR + 0.05 * x[-1]
 
             ax.plot(x, y, color='r')
             ax.plot(smoothedx, smoothedy, color='k')
@@ -148,7 +148,7 @@ class ManualSectioning(tk.Toplevel):
             rawy = tr.unwrapped
             rawx = np.array(range(len(rawy))) * SR
             y = smoothing(rawy, int((len(rawy) * 10) // 100))
-            x = np.array(range(len(y))) * SR + 0.1 * rawx[-1]
+            x = np.array(range(len(y))) * SR + 0.05 * rawx[-1]
 
             if not delimiter.size:
                 m, b = self.slope(x, y)
@@ -186,10 +186,8 @@ class ManualSectioning(tk.Toplevel):
         SR = trackobject.samplerate
         y = trackobject.unwrapped
         x = np.array(range(len(y))) * SR
-        smoothedy = smoothing(y, int((len(y) * 10) // 100))
-        smoothedx = np.array(range(len(smoothedy))) * SR + 0.1*x[-1]
         for value in clickarray:
-            idx = (np.abs(smoothedx - value)).argmin()
+            idx = (np.abs(x - value)).argmin()
             indexes.append(idx)
         return np.sort(indexes)
 

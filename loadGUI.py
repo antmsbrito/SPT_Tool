@@ -83,7 +83,7 @@ class loadGUI(tk.Tk):
             self.destroy()
             exit()
         if self.numberofnpy.get() == 2:
-            html_comparison(self.TrackObjects, [], savepath)
+            html_comparison(self.TrackObjects, savepath)
             self.destroy()
             exit()
         else:
