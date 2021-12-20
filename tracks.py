@@ -199,10 +199,10 @@ class TrackV2:
         """
         These cryptic (yet genius) lines of code were taken verbatim from
         https://wet-robots.ghost.io/simple-method-for-distance-to-ellipse/
-        This implements a method to calculate the ellipse point that is closen to a given point p
+        This implements a method to calculate the ellipse point that is closer to a given point p
         It works by using the evolute of the ellipse (ex, ey the center of curvature) to locally approximate
         the ellipse to a circle! Then we just iterate the method 3-4 times to yield the final point.
-        The current implementation NEEDS and ellipse centered at (0,0) with horizontal major axis.
+        The current implementation NEEDS an ellipse centered at (0,0) with horizontal major axis.
         """
         px = abs(p[0])
         py = abs(p[1])
