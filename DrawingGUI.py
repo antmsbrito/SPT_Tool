@@ -32,6 +32,9 @@ class DrawingEllipses(tk.Toplevel):
         self.pxmax = tk.IntVar()
         self.pxmin = tk.IntVar()
 
+        self.msd_alpha = tk.DoubleVar()
+        self.msd_text = tk.StringVar()
+
         # To store clicks
         self.x_clicks = []
         self.y_clicks = []
@@ -62,18 +65,22 @@ class DrawingEllipses(tk.Toplevel):
         self.init_plot()
         self.init_buttons()
 
-
         tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
 
     def init_sliders(self):
         frame_slider = tk.Frame(self)
         frame_slider.pack(side=tk.RIGHT)
 
-        max_slider = tk.Scale(master=frame_slider, command=self.update_max, from_=0, to=2 ** 16, variable=self.pxmax, orient=tk.VERTICAL, label="Max", length=200)
+        max_slider = tk.Scale(master=frame_slider, command=self.update_max, from_=0, to=2 ** 16, variable=self.pxmax,
+                              orient=tk.VERTICAL, label="Max", length=200)
         max_slider.pack(side=tk.TOP)
 
-        min_slider = tk.Scale(master=frame_slider, command=self.update_min, from_=0, to=2 ** 16, variable=self.pxmin, orient=tk.VERTICAL, label="Min", length=200)
+        min_slider = tk.Scale(master=frame_slider, command=self.update_min, from_=0, to=2 ** 16, variable=self.pxmin,
+                              orient=tk.VERTICAL, label="Min", length=200)
         # min_slider.pack(side=tk.BOTTOM)
+
+        msd_label = tk.Label(master=frame_slider, textvariable=self.msd_text)
+        msd_label.pack(side=tk.BOTTOM)
 
     def update_min(self, _):
         self.redraw_graph(pxmax=self.pxmax.get(), pxmin=self.pxmin.get())
@@ -119,6 +126,10 @@ class DrawingEllipses(tk.Toplevel):
 
         # Event handler
         self.canvas.mpl_connect("button_press_event", self.clickGraph)
+
+        # Connect msd calculations to variables
+        self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
+        self.msd_text.set(f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n Smaller OR equal to 1 corresponds to diffusive motion")
 
     def clickGraph(self, event):
         if event.inaxes is not None:
@@ -251,8 +262,12 @@ class DrawingEllipses(tk.Toplevel):
         lc.set_linewidth(2)
         line = ax.add_collection(lc)
 
-
         self.canvas.draw()
+
+        self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
+        self.msd_text.set(
+        f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n "
+        f"Smaller OR equal to 1 corresponds to diffusive motion")
 
     def finishup(self):
         for idx, tr in enumerate(self.rawdata):

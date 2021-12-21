@@ -18,12 +18,16 @@ class TrackV2:
         self.imageobject = im
         self.x = np.array(x)
         self.y = np.array(y)
-        self.xypairs = np.array([[xc, yc] for xc, yc in zip(self.x, self.y)])
+        self.xypairs = np.array([np.array([xc, yc]) for xc, yc in zip(self.x, self.y)])
 
         self.name = name
         self.samplerate = float(samplerate)
 
-        self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (len(np.diff(self.y)) * self.samplerate)
+        self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (
+                    len(np.diff(self.y)) * self.samplerate)
+        self.twodposition = np.array([np.sqrt(np.square(p[0]) + np.square(p[1])) for p in self.xypairs])
+        self.msd = self.msd_calc(self.xypairs)
+        self.msd_alpha = slope(np.log10(np.arange(1, 20) * 3), np.log10(self.msd[1:20]))[0]
 
         self._ellipse = ellipse
         self.xy_ellipse = None
@@ -127,14 +131,14 @@ class TrackV2:
         ang = np.deg2rad(self._ellipse['angle'])
 
         # Translate and rotate ellipse to be centered at (0,0) with major axis horizontal
-        translated = [x-center for x in self.xypairs]
-        rotated_and_translated = [self.rot2d(-1*ang).dot(t) for t in translated]
+        translated = [x - center for x in self.xypairs]
+        rotated_and_translated = [self.rot2d(-1 * ang).dot(t) for t in translated]
 
         # Solve closest point problem
         ellipsepoints = [self.solve(smmajor, smminor, point) for point in rotated_and_translated]
 
         # Undo rotation and translation
-        return np.array([self.rot2d(ang).dot(p)+center for p in ellipsepoints])
+        return np.array([self.rot2d(ang).dot(p) + center for p in ellipsepoints])
 
     def unwrapper(self):
 
@@ -193,6 +197,18 @@ class TrackV2:
             zcoord.append(temporaryZ * counter)
 
         return np.array(zcoord)
+
+    @staticmethod
+    def msd_calc(r):
+        shifts = np.arange(len(r))
+        msds = np.zeros(shifts.size)
+
+        for i, shift in enumerate(shifts):
+            diffs = r[:-shift if shift else None] - r[shift:]
+            sqdist = np.square(diffs).sum(axis=1)
+            msds[i] = sqdist.mean()
+
+        return msds
 
     @staticmethod
     def solve(semi_major, semi_minor, p):

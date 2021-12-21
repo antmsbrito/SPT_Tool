@@ -13,6 +13,8 @@ from AnGUI import analysisGUI
 
 from tracks import *
 
+from matplotlib import pyplot as plt
+
 
 # Class that inherits root window class from tk
 class ellipseGUI(tk.Tk):
@@ -76,7 +78,6 @@ class ellipseGUI(tk.Tk):
         return im
 
     def drawing_button(self):
-
         drawing_window = DrawingEllipses(self.TrackList)
         drawing_window.grab_set()
         self.wait_window(drawing_window)
