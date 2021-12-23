@@ -62,6 +62,7 @@ class DrawingEllipses(tk.Toplevel):
 
         # Window has two frames
         self.init_sliders()
+        self.init_label()
         self.init_plot()
         self.init_buttons()
 
@@ -71,15 +72,19 @@ class DrawingEllipses(tk.Toplevel):
         frame_slider = tk.Frame(self)
         frame_slider.pack(side=tk.RIGHT)
 
-        max_slider = tk.Scale(master=frame_slider, command=self.update_max, from_=0, to=2 ** 16, variable=self.pxmax,
-                              orient=tk.VERTICAL, label="Max", length=200)
-        max_slider.pack(side=tk.TOP)
+        max_slider = tk.Scale(master=frame_slider, command=self.update_max, from_=2 ** 8, to=0, variable=self.pxmax,
+                              orient=tk.VERTICAL, label="Max", length=150)
+        max_slider.pack(side=tk.RIGHT)
 
-        min_slider = tk.Scale(master=frame_slider, command=self.update_min, from_=0, to=2 ** 16, variable=self.pxmin,
-                              orient=tk.VERTICAL, label="Min", length=200)
-        # min_slider.pack(side=tk.BOTTOM)
+        min_slider = tk.Scale(master=frame_slider, command=self.update_min, from_=0, to=2 ** 8, variable=self.pxmin,
+                              orient=tk.VERTICAL, label="Min", length=150)
+        min_slider.pack(side=tk.LEFT)
 
-        msd_label = tk.Label(master=frame_slider, textvariable=self.msd_text)
+    def init_label(self):
+        frame_label = tk.Frame(self)
+        frame_label.pack(side=tk.BOTTOM)
+
+        msd_label = tk.Label(master=frame_label, textvariable=self.msd_text, pady=10)
         msd_label.pack(side=tk.BOTTOM)
 
     def update_min(self, _):
@@ -97,6 +102,11 @@ class DrawingEllipses(tk.Toplevel):
         self.canvas = FigureCanvasTkAgg(fig, master=frame_plot)
 
         image = self.rawdata[self.current_track].imageobject
+
+        image = np.asarray(image)
+        normalized = (image.astype(np.uint16) - image.min()) * 255.0 / (image.max() - image.min())
+        image = normalized.astype(np.uint8)
+
         x = np.array(self.rawdata[self.current_track].x) / 0.08  # TODO UM TO NM
         y = np.array(self.rawdata[self.current_track].y) / 0.08  # TODO UM TO NM
 
@@ -236,7 +246,7 @@ class DrawingEllipses(tk.Toplevel):
             self.y_clicks = []
             self.redraw_graph()
 
-    def redraw_graph(self, pxmin=0, pxmax=2 ** 16):
+    def redraw_graph(self, pxmin=0, pxmax=2 ** 8):
         print(pxmax)
         ax = self.canvas.figure.axes[0]
 
@@ -246,6 +256,11 @@ class DrawingEllipses(tk.Toplevel):
         ax.collections = []
 
         image = self.rawdata[self.current_track].imageobject
+
+        image = np.asarray(image)
+        normalized = (image.astype(np.uint16) - image.min()) * 255.0 / (image.max() - image.min())
+        image = normalized.astype(np.uint8)
+
         x = np.array(self.rawdata[self.current_track].x) / 0.08
         y = np.array(self.rawdata[self.current_track].y) / 0.08
         ax.imshow(image, cmap="gray", vmin=pxmin, vmax=pxmax)
