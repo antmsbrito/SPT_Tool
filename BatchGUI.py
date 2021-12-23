@@ -2,18 +2,12 @@ import tkinter as tk
 import os
 import numpy as np
 
-from tracks import Track
-
-import xml.etree.ElementTree as ET
+from tracks import *
 
 from PIL import Image
 
 from AnGUI import analysisGUI
-
-from EllipseGUI import PrecursorTrackObject
-
 from DrawingGUI import DrawingEllipses
-
 
 # Class that inherits root window class from tk
 class batchGUI(tk.Tk):
@@ -39,10 +33,14 @@ class batchGUI(tk.Tk):
                         if not os.path.exists(imgfile):
                             print(f"OOPS, the following xml file does not have an image counterpart \n {file} \n")
                         else:
-                            self.load(file, imgfile)
+                            self.load(os.path.join(root, file), imgfile)
+
+        self.drawing_button()
 
     def load(self, xml, image):
-        self.TrackList = np.append(self.TrackList, PrecursorTrackObject.generator(xml, image))
+        imgobj = Image.open(image)
+        self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, imgobj))
+        print(len(self.TrackList), xml)
 
     def drawing_button(self):
 
@@ -52,5 +50,5 @@ class batchGUI(tk.Tk):
 
         self.FinalTracks = drawing_window.track_classes
         self.destroy()
-        analysisapp = analysisGUI(self.FinalTracks)
+        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects)
         analysisapp.mainloop()

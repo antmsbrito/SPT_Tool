@@ -1,13 +1,22 @@
+"""
+SPT_TOOL
+@author António Brito
+ITQB-UNL BCB 2021
+"""
+
 import tkinter as tk
-import numpy as np
-import pandas as pd
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib import patches
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap, BoundaryNorm
 
-from tracks import Track
+from PIL import Image, ImageEnhance
+
+from tracks import *
+
 
 # Class inheriting toplevel windows from tk
 class DrawingEllipses(tk.Toplevel):
@@ -18,7 +27,13 @@ class DrawingEllipses(tk.Toplevel):
         # Configuring window
         self.wm_title("Drawing Ellipses")
         self.title("Drawing Ellipses")
-        self.geometry("600x600")
+        self.geometry("700x700")
+
+        self.pxmax = tk.IntVar()
+        self.pxmin = tk.IntVar()
+
+        self.msd_alpha = tk.DoubleVar()
+        self.msd_text = tk.StringVar()
 
         # To store clicks
         self.x_clicks = []
@@ -43,10 +58,40 @@ class DrawingEllipses(tk.Toplevel):
 
         # Final result
         self.track_classes = None
+        self.rejects = None
 
         # Window has two frames
+        self.init_sliders()
+        self.init_label()
         self.init_plot()
         self.init_buttons()
+
+        tk.messagebox.showinfo(title="IMPORTANT", message="ALWAYS DRAW THE MAJOR AXIS FIRST")
+
+    def init_sliders(self):
+        frame_slider = tk.Frame(self)
+        frame_slider.pack(side=tk.RIGHT)
+
+        max_slider = tk.Scale(master=frame_slider, command=self.update_max, from_=2 ** 8, to=0, variable=self.pxmax,
+                              orient=tk.VERTICAL, label="Max", length=150)
+        max_slider.pack(side=tk.RIGHT)
+
+        min_slider = tk.Scale(master=frame_slider, command=self.update_min, from_=0, to=2 ** 8, variable=self.pxmin,
+                              orient=tk.VERTICAL, label="Min", length=150)
+        min_slider.pack(side=tk.LEFT)
+
+    def init_label(self):
+        frame_label = tk.Frame(self)
+        frame_label.pack(side=tk.BOTTOM)
+
+        msd_label = tk.Label(master=frame_label, textvariable=self.msd_text, pady=10)
+        msd_label.pack(side=tk.BOTTOM)
+
+    def update_min(self, _):
+        self.redraw_graph(pxmax=self.pxmax.get(), pxmin=self.pxmin.get())
+
+    def update_max(self, _):
+        self.redraw_graph(pxmax=self.pxmax.get(), pxmin=self.pxmin.get())
 
     def init_plot(self):
         frame_plot = tk.Frame(self)
@@ -57,16 +102,30 @@ class DrawingEllipses(tk.Toplevel):
         self.canvas = FigureCanvasTkAgg(fig, master=frame_plot)
 
         image = self.rawdata[self.current_track].imageobject
-        x = np.array(self.rawdata[self.current_track].x) / 0.08
-        y = np.array(self.rawdata[self.current_track].y) / 0.08
+
+        image = np.asarray(image)
+        normalized = (image.astype(np.uint16) - image.min()) * 255.0 / (image.max() - image.min())
+        image = normalized.astype(np.uint8)
+
+        x = np.array(self.rawdata[self.current_track].x) / 0.08  # TODO UM TO NM
+        y = np.array(self.rawdata[self.current_track].y) / 0.08  # TODO UM TO NM
 
         ax = fig.add_subplot()
         ax.imshow(image, cmap='gray')
-        ax.plot(x, y, color='r')
+        # ax.plot(x, y, color='r')
         ax.set_xlabel("x coordinates (px)")
         ax.set_ylabel("y coordinates (px)")
         ax.set_xlim((np.average(x) - 30, np.average(x) + 30))
         ax.set_ylim((np.average(y) - 30, np.average(y) + 30))
+
+        cumulative_disp = np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+        points = np.array([x, y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        norm = plt.Normalize(cumulative_disp.min(), cumulative_disp.max())
+        lc = LineCollection(segments, cmap='rainbow', norm=norm)
+        lc.set_array(cumulative_disp)
+        lc.set_linewidth(2)
+        line = ax.add_collection(lc)
 
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill='both', expand=True)
@@ -78,8 +137,13 @@ class DrawingEllipses(tk.Toplevel):
         # Event handler
         self.canvas.mpl_connect("button_press_event", self.clickGraph)
 
+        # Connect msd calculations to variables
+        self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
+        self.msd_text.set(f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n Smaller OR equal to 1 corresponds to diffusive motion")
+
     def clickGraph(self, event):
         if event.inaxes is not None:
+            print(event.xdata, event.ydata)
             ax = self.canvas.figure.axes[0]
 
             xclick = event.xdata
@@ -110,6 +174,10 @@ class DrawingEllipses(tk.Toplevel):
             if len(self.x_clicks) == 3:
                 self.minor = np.sqrt((self.x_clicks[2] - self.x0) ** 2 + (self.y_clicks[2] - self.y0) ** 2) * 2
 
+                if self.minor > self.major:
+                    self.minor, self.major = self.major, self.minor
+
+                # TODO recheck angle for the 1000 time just to be sure
                 eli = patches.Ellipse((self.x0, self.y0), self.major, self.minor, np.rad2deg(self.angle), fill=False,
                                       edgecolor='black', alpha=0.3)
                 ax.add_patch(eli)
@@ -131,26 +199,43 @@ class DrawingEllipses(tk.Toplevel):
         UNDO_button = tk.Button(master=frame_buttons, text="Undo", command=self.undo)
         UNDO_button.pack(side='left', fill='x', expand=True)
 
+        IGNORE_BUTTON = tk.Button(master=frame_buttons, text="Discard", command=self.discard)
+        IGNORE_BUTTON.pack(side='left', fill='x', expand=True)
+
         QUIT_button = tk.Button(master=frame_buttons, text="QUIT", command=self.destroy)
         QUIT_button.pack(side='left', fill='x', expand=True)
 
     def nexttrack(self):
 
-        if not self.x_clicks or not len(self.x_clicks)==3:
+        if not self.x_clicks or not len(self.x_clicks) == 3:
             return 0
 
         self.x_clicks = []
         self.y_clicks = []
 
-
+        #  Check if we have more tracks other wise finish up the gui
         if self.rawdata[-1] == self.rawdata[self.current_track]:
-            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
+                                                'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}
             self.finishup()
         else:
-            self.elidict[self.current_track]={'x0': self.x0*0.08, 'y0': self.y0*0.08, 'major': self.major*0.08, 'minor': self.minor*0.08, 'angle': np.rad2deg(self.angle)}
+            self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
+                                                'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}
             self.current_track += 1
             self.redraw_graph()
 
+    def discard(self):
+
+        self.x_clicks = []
+        self.y_clicks = []
+
+        if self.rawdata[-1] == self.rawdata[self.current_track]:
+            self.elidict[self.current_track] = None
+            self.finishup()
+        else:
+            self.elidict[self.current_track] = None
+            self.current_track += 1
+            self.redraw_graph()
 
     def undo(self):
         if not self.x_clicks and self.current_track > 0:
@@ -161,7 +246,8 @@ class DrawingEllipses(tk.Toplevel):
             self.y_clicks = []
             self.redraw_graph()
 
-    def redraw_graph(self):
+    def redraw_graph(self, pxmin=0, pxmax=2 ** 8):
+        print(pxmax)
         ax = self.canvas.figure.axes[0]
 
         ax.lines = []
@@ -170,34 +256,38 @@ class DrawingEllipses(tk.Toplevel):
         ax.collections = []
 
         image = self.rawdata[self.current_track].imageobject
+
+        image = np.asarray(image)
+        normalized = (image.astype(np.uint16) - image.min()) * 255.0 / (image.max() - image.min())
+        image = normalized.astype(np.uint8)
+
         x = np.array(self.rawdata[self.current_track].x) / 0.08
         y = np.array(self.rawdata[self.current_track].y) / 0.08
-        ax.imshow(image, cmap="gray")
-        ax.plot(x, y, color='r')
+        ax.imshow(image, cmap="gray", vmin=pxmin, vmax=pxmax)
+        # ax.plot(x, y, color='r')
         ax.set_xlim((np.average(x) - 30, np.average(x) + 30))
         ax.set_ylim((np.average(y) - 30, np.average(y) + 30))
 
+        cumulative_disp = np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+        points = np.array([x, y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        norm = plt.Normalize(cumulative_disp.min(), cumulative_disp.max())
+        lc = LineCollection(segments, cmap='rainbow', norm=norm)
+        lc.set_array(cumulative_disp)
+        lc.set_linewidth(2)
+        line = ax.add_collection(lc)
+
         self.canvas.draw()
 
+        self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
+        self.msd_text.set(
+        f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n "
+        f"Smaller OR equal to 1 corresponds to diffusive motion")
+
     def finishup(self):
-        self.track_classes = Track.generatetrack_ellipse(self.rawdata, self.elidict)
+        for idx, tr in enumerate(self.rawdata):
+            self.rawdata[idx].ellipse = self.elidict[idx]
+        self.track_classes = [r for i, r in enumerate(self.rawdata) if self.elidict[i]]
+        self.rejects = [r for i, r in enumerate(self.rawdata) if not self.elidict[i]]
         self.quit()
         self.destroy()
-
-    @staticmethod
-    def linelineintersection(pointsx, pointsy):
-        # Instead of deriving the equation for the intersection of two lines i borrowed it from
-        # https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-
-        denominator = (pointsx[0] - pointsx[1]) * (pointsy[2] - pointsy[3]) - (pointsy[0] - pointsy[1]) * (
-                pointsx[2] - pointsx[3])
-
-        px = (pointsx[0] * pointsy[1] - pointsy[0] * pointsx[1]) * (pointsx[2] - pointsx[3]) - (
-                pointsx[0] - pointsx[1]) * (pointsx[2] * pointsy[3] - pointsy[2] * pointsx[3])
-        px = px / denominator
-
-        py = (pointsx[0] * pointsy[1] - pointsy[0] * pointsx[1]) * (pointsy[2] - pointsy[3]) - (
-                pointsy[0] - pointsy[1]) * (pointsx[2] * pointsy[3] - pointsy[2] * pointsx[3])
-        py = py / denominator
-
-        return px, py

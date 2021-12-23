@@ -1,8 +1,12 @@
+"""
+SPT_TOOL
+@author António Brito
+ITQB-UNL BCB 2021
+"""
+
 import tkinter as tk
-import numpy as np
 
-from tracks import Track
-
+from tracks import *
 from AnGUI import analysisGUI
 
 
@@ -26,7 +30,7 @@ class csvGUI(tk.Tk):
         self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
 
         # Main window has two frames
-        # left side for input related stuff; right for output and 
+        # left side for input related stuff; right for output
         self.init_input()
         self.init_output()
 
@@ -37,7 +41,7 @@ class csvGUI(tk.Tk):
         XML_button = tk.Button(master=frame_input, text="Load Trackmate .xml file", command=self.load_xml)
         XML_button.pack(fill='x', expand=True)
 
-        ANALYSIS_button = tk.Button(master = frame_input, text="Start analysis", command=self.analysis_button)
+        ANALYSIS_button = tk.Button(master=frame_input, text="Start analysis", command=self.analysis_button)
         ANALYSIS_button.pack(fill='x', expand=True)
 
     def init_output(self):
@@ -46,7 +50,7 @@ class csvGUI(tk.Tk):
 
         status_text = tk.Label(master=frame_output, textvariable=self.LabelText)
         status_text.pack(side='top', fill='both')
-        track_text = tk.Label(master=frame_output, textvariable=self.CurrentTrack,wraplength=300, justify="center")
+        track_text = tk.Label(master=frame_output, textvariable=self.CurrentTrack, wraplength=300, justify="center")
         track_text.pack(side='bottom', fill='both')
 
     def load_xml(self):
@@ -59,17 +63,15 @@ class csvGUI(tk.Tk):
             csv = []
             while not csv:
                 csv = self.load_csv(xml)
-            self.TrackList = np.append(self.TrackList, Track.generatetrackfromcsv(xml,csv))
+            self.TrackList = np.append(self.TrackList, TrackV2.generatetrackfromcsv(xml, csv))
             self.NumberOfTracks.set(len(self.TrackList))
             self.LabelText.set(f"{self.NumberOfTracks.get()} tracks loaded")
-
 
     def load_csv(self, xmlpath):
         csvdir = xmlpath
         csvpath = tk.filedialog.askopenfilename(initialdir=csvdir, title="Select ellipse CSV file")
         if not csvpath[-3:] == "csv":
             tk.messagebox.showerror(title="CSV", message="File extension must be .CSV")
-        # TODO this is a problem if one does not load a csv
         self.CurrentTrack.set("Load more tracks or start analysing")
         return csvpath
 
@@ -78,13 +80,12 @@ class csvGUI(tk.Tk):
             tk.messagebox.showerror(title="No tracks", message="No tracks loaded!")
         else:
             self.destroy()
-            # Currently this is just to ignore tracks with no ellipses drawn
-            self.checkTrackError()
             analysisapp = analysisGUI(self.TrackList)
             analysisapp.mainloop()
 
     def checkTrackError(self):
         self.TrackList = [t for t in self.TrackList if t.ellipse_error < 200]
+
 
 if __name__ == '__main__':
     app = csvGUI()
