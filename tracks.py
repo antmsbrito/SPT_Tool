@@ -36,6 +36,7 @@ class TrackV2:
         self.z = None
         self.unwrapped = None
         self.minmax_velo = None
+        self.disp_velo = None
 
         self.manual_sections = []
         self.manual_velo = []
@@ -121,6 +122,7 @@ class TrackV2:
         self.minmax_velo = minmax(self)
         self.manual_sections = [] if not self.manual_sections else self.manual_sections
         self.manual_velo = [] if not self.manual_sections else self.manual_sections
+        self.disp_velo = displacement(self)
 
     def closest_ellipse_points(self):
 
