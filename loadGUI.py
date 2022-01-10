@@ -30,6 +30,8 @@ class loadGUI(tk.Tk):
         self.TrackObjects = []
         self.filenames = []
 
+        self.makeimagesvar = tk.IntVar()
+
         self.init_input()
         self.init_output()
 
@@ -42,6 +44,9 @@ class loadGUI(tk.Tk):
 
         ANALYZE_button = tk.Button(master=frame_input, text="Analyze .npy files", command=self.analyze)
         ANALYZE_button.pack(fill='x', expand=True)
+
+        IMAGES_tick = tk.Checkbutton(master=frame_input, text="Make Images", variable=self.makeimagesvar, onvalue=1, offvalue=0)
+        IMAGES_tick.pack(anchor='w')
 
     def init_output(self):
         frame_output = tk.Frame(self)
@@ -78,16 +83,20 @@ class loadGUI(tk.Tk):
         if self.numberofnpy.get() == 1:
             manual = True if self.TrackObjects[0][0].manual_velo else False
             html_summary(self.TrackObjects[0], [], savepath, manual)
-            makeimage(self.TrackObjects[0], savepath, manual)
+            if self.makeimagesvar:
+                makeimage(self.TrackObjects[0], savepath, manual)
             npy_builder(self.TrackObjects[0], None, savepath)
             self.destroy()
             exit()
-        if self.numberofnpy.get() == 2:
-            html_comparison(self.TrackObjects, savepath)
-            self.destroy()
-            exit()
         else:
-            tk.messagebox.showinfo("Sorry! Statistical tests on more than one sample are not implemented yet")
+            all_arr = np.array([])
+            for obj in self.TrackObjects:
+                all_arr = np.append(all_arr, obj)
+            manual = True if all_arr[0].manual_velo else False
+            html_summary(all_arr, [], savepath, manual)
+            if self.makeimagesvar:
+                makeimage(all_arr, savepath, manual)
+            npy_builder(all_arr, None, savepath)
             self.destroy()
             exit()
 
