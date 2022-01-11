@@ -160,7 +160,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
         "disp_vel": np.mean(disp_array),
         "disp_std": np.std(disp_array),
         "disp_med": np.median(disp_array),
-        "disp_n" : len(disp_array),
+        "disp_n": len(disp_array),
         "minmax_n": len(minmax_array) if isinstance(minmax_array, (list, tuple, np.ndarray)) else 0,
         "manual_vel": np.mean(manual_array),
         "manual_std": np.std(manual_array),
