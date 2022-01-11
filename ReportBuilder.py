@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from jinja2 import Template
@@ -159,6 +160,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
         "disp_vel": np.mean(disp_array),
         "disp_std": np.std(disp_array),
         "disp_med": np.median(disp_array),
+        "disp_n" : np.len(disp_array),
         "minmax_n": len(minmax_array) if isinstance(minmax_array, (list, tuple, np.ndarray)) else 0,
         "manual_vel": np.mean(manual_array),
         "manual_std": np.std(manual_array),
