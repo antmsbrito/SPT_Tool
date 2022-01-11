@@ -107,9 +107,9 @@ def displacement(track):
     by a 30% window moving average.
     """
 
-    xcoord = np.diff(track.xtrack)
-    ycoord = np.diff(track.ytrack)
-    zcoord = np.diff(track.ztrack)
+    xcoord = np.diff(track.x)
+    ycoord = np.diff(track.y)
+    zcoord = np.diff(track.z)
     displacement_ = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
 
     # In reality we should be looking to regions of flatness
