@@ -80,7 +80,7 @@ def html_summary(tracklist, rejects, savepath, manualBool):
     n, bins, patches = plt.hist(x=minmax_array, bins='auto', density=True, alpha=0.1)
     plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
 
-    disp_array = BDA(tracklist, 'minmax_velo')
+    disp_array = BDA(tracklist, 'disp_velo')
     n, bins, patches = plt.hist(x=disp_array, bins='auto', density=True, alpha=0.1)
     plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="Displacement")
 
