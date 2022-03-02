@@ -69,10 +69,9 @@ class ChooseWindow(tk.Tk):
         Opens next GUI window for batch analysis of several conditions
         """
 
-        print("Out of order! (refactoring in progress)")
-        # self.destroy()
-        # gui = batchGUI()
-        # gui.mainloop()
+        self.destroy()
+        gui = batchGUI()
+        gui.mainloop()
 
 
 if __name__ == '__main__':
