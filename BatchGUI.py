@@ -10,6 +10,7 @@ from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
 
 # Class that inherits root window class from tk
 class batchGUI(tk.Tk):
+
     def __init__(self):
         super().__init__()  # init of tk.Tk
 
@@ -19,6 +20,7 @@ class batchGUI(tk.Tk):
 
         folder = tk.filedialog.askdirectory(initialdir="C:", title="Please choose folder")
 
+        #load one by one
         for root, dirs, files in os.walk(folder):
             for file in files:
                 if file.endswith("Dump.npy"):
