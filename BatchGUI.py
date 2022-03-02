@@ -1,54 +1,61 @@
 import tkinter as tk
 import os
-import numpy as np
 
 from tracks import *
 
-from PIL import Image
+from datetime import date
 
-from AnGUI import analysisGUI
-from DrawingGUI import DrawingEllipses
+from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
+
 
 # Class that inherits root window class from tk
 class batchGUI(tk.Tk):
     def __init__(self):
         super().__init__()  # init of tk.Tk
 
-        # Configure root window
-        self.wm_title("IO Window")
-        self.title("IO Window")
-        self.geometry('350x75')
-
         # List of track related objects
-        self.TrackList = []
+        self.TrackObjects = []
         self.FinalTracks = None
 
         folder = tk.filedialog.askdirectory(initialdir="C:", title="Please choose folder")
 
         for root, dirs, files in os.walk(folder):
-            if 'XML' in root or 'xml' in root:
-                for file in files:
-                    if file.endswith(".xml"):
-                        imgfile = os.path.join(root, file[:-4] + ".tif")
-                        if not os.path.exists(imgfile):
-                            print(f"OOPS, the following xml file does not have an image counterpart \n {file} \n")
-                        else:
-                            self.load(os.path.join(root, file), imgfile)
+            for file in files:
+                if file.endswith("Dump.npy"):
+                    self.load(file)
 
-        self.drawing_button()
+        self.analyze()
 
-    def load(self, xml, image):
-        imgobj = Image.open(image)
-        self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, imgobj))
-        print(len(self.TrackList), xml)
 
-    def drawing_button(self):
+    def load(self, npy):
+        objs = np.load(npy, allow_pickle=True)
+        if isinstance(objs[0], Track):
+            newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
+            self.TrackObjects.append(newObjects)
+        else:
+            newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse) for t in objs]
+            self.TrackObjects.append(newObjects)
 
-        drawing_window = DrawingEllipses(self.TrackList)
-        drawing_window.grab_set()
-        self.wait_window(drawing_window)
 
-        self.FinalTracks = drawing_window.track_classes
-        self.destroy()
-        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects)
-        analysisapp.mainloop()
+    def analyze(self):
+
+        savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
+        savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
+        os.makedirs(savepath, exist_ok=True)
+
+        if self.numberofnpy.get() == 1:
+            manual = True if self.TrackObjects[0][0].manual_velo else False
+            html_summary(self.TrackObjects[0], [], savepath, manual)
+            npy_builder(self.TrackObjects[0], None, savepath)
+            self.destroy()
+            exit()
+        else:
+            all_arr = np.array([])
+            for obj in self.TrackObjects:
+                all_arr = np.append(all_arr, obj)
+            manual = True if all_arr[0].manual_velo else False
+            html_summary(all_arr, [], savepath, manual)
+            npy_builder(all_arr, None, savepath)
+            self.destroy()
+            exit()
+
