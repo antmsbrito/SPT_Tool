@@ -68,7 +68,8 @@ class loadGUI(tk.Tk):
                 newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
                 self.TrackObjects.append(newObjects)
             else:
-                self.TrackObjects.append(objs)
+                newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse) for t in objs]
+                self.TrackObjects.append(newObjects)
             self.filenames.append(npy)
 
     def analyze(self):
