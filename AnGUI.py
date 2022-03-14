@@ -9,10 +9,8 @@ import os
 from datetime import date
 
 from tracks import *
-
 from GUI_ManualSectioning import ManualSectioning
-
-from ReportBuilder import html_summary, npy_builder, makeimage
+from ReportBuilder import html_summary, npy_builder
 
 
 class analysisGUI(tk.Tk):
@@ -60,7 +58,6 @@ class analysisGUI(tk.Tk):
 
 
     def analyze(self):
-
         if self.manual_var.get():
             print("Manual...")
             TL = ManualSectioning(self.TrackList)
@@ -69,10 +66,13 @@ class analysisGUI(tk.Tk):
             self.TrackList = TL.alltracks
 
         # What to save?
-        # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between conditions DONE
+        # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between condition (for legacy purposes)
         npy_builder(self.TrackList, self.RejectedTracks, self.savepath)
-        # 4 - general html report DONE #TODO improve it
+        # 2 - general html report DONE #TODO improve it
         html_summary(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
+        # 3 - csv file with results
+        #csv_results() # TODO add csv
+        # 4 -
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()

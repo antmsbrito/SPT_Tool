@@ -1,11 +1,10 @@
-import tkinter as tk
 import os
-
-from tracks import *
-
+import tkinter as tk
 from datetime import date
 
-from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
+
+from tracks import *
+from ReportBuilder import html_summary, makeimage, npy_builder
 
 
 # Class that inherits root window class from tk

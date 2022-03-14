@@ -51,7 +51,7 @@ def findallpeaks(y):
             nd = allpeaks[idx + 1]
         except IndexError:
             final_peaks.append(d)
-            break # continue
+            break  # continue
         if nd - d == 1:
             continue
         else:
@@ -70,15 +70,23 @@ def slope(x, y):
 
 
 def minmax(track):
+    """Breakpoint regression where delimiters are given by
+    maximums, minimums and inflexion points
     """
-    Minmax method
+
+    yaxis = smoothing(track.unwrapped, int((len(track.unwrapped) * 20) // 100))
+    xaxis = np.array(range(len(yaxis))) * track.samplerate
+    delimiter = findallpeaks(yaxis)
+
+    return breakpoint_regression(xaxis, yaxis, delimiter)
+
+
+def breakpoint_regression(x, y, delimiter):
+    """
     Given a set of delimiters (min, max and inflexion points), calculates the slopes between those delimiters
     """
 
     section_velocity = []
-    y = smoothing(track.unwrapped, int((len(track.unwrapped) * 20) // 100))
-    x = np.array(range(len(y))) * track.samplerate
-    delimiter = findallpeaks(y)
 
     if not delimiter.size:  # is empty
         m, b = slope(x, y)
