@@ -98,3 +98,23 @@ def minmax(track):
     section_velocity = np.abs(section_velocity)
 
     return section_velocity * 1000
+
+
+def displacement(track):
+    """
+    Displacement method. For a given track calculates the displacement between each point in 3D
+    The velocity is calculated by dividing each displacement by the sample rate and smoothing everything
+    by a 30% window moving average.
+    """
+
+    xcoord = np.diff(track.x)
+    ycoord = np.diff(track.y)
+    zcoord = np.diff(track.z)
+    displacement_ = np.sqrt(xcoord ** 2 + ycoord ** 2 + zcoord ** 2)
+
+    # In reality we should be looking to regions of flatness
+    # Plateaus of slope zero which indicate constant velocity
+
+    velo = smoothing(displacement_ / track.samplerate, int((len(displacement_) * 30) // 100))
+
+    return velo * 1000

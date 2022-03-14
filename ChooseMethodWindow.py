@@ -68,6 +68,7 @@ class ChooseWindow(tk.Tk):
         """
         Opens next GUI window for batch analysis of several conditions
         """
+
         self.destroy()
         gui = batchGUI()
         gui.mainloop()

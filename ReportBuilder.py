@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 from io import BytesIO
 
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from jinja2 import Template
@@ -39,6 +40,22 @@ def build_property_array(trackobj, prop):
         raise RuntimeError(f"ERROR: no attribute called {prop}")
 
 
+def BDA(trackobj, prop):
+    if prop == "minmax" or prop == "manual":
+        arr = []
+        l = []
+        for tr in trackobj:
+            l.append(len(getattr(tr, prop)))
+            arr = np.append(arr, getattr(tr, prop))
+        # print(np.mean(l), prop)
+        return arr
+    else:
+        arr = []
+        for tr in trackobj:
+            arr = np.append(arr, np.array(np.mean(getattr(tr, prop))))
+        return arr
+
+
 def buildhistogram(bins):
     centerbins = []
     for idx, bini in enumerate(bins):
@@ -62,6 +79,11 @@ def html_summary(tracklist, rejects, savepath, manualBool):
     minmax_array = build_property_array(tracklist, 'minmax_velo')
     n, bins, patches = plt.hist(x=minmax_array, bins='auto', density=True, alpha=0.1)
     plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="MinMax Sectioning")
+
+    disp_array = BDA(tracklist, 'disp_velo')
+    n, bins, patches = plt.hist(x=disp_array, bins='auto', density=True, alpha=0.1)
+    plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="Displacement")
+
 
     plt.xlabel('Velocity (nm/s)')
     plt.ylabel('PDF')
@@ -135,6 +157,10 @@ def html_summary(tracklist, rejects, savepath, manualBool):
         "minmax_vel": np.mean(minmax_array),
         "minmax_std": np.std(minmax_array),
         "minmax_med": np.median(minmax_array),
+        "disp_vel": np.mean(disp_array),
+        "disp_std": np.std(disp_array),
+        "disp_med": np.median(disp_array),
+        "disp_n": len(disp_array),
         "minmax_n": len(minmax_array) if isinstance(minmax_array, (list, tuple, np.ndarray)) else 0,
         "manual_vel": np.mean(manual_array),
         "manual_std": np.std(manual_array),
@@ -159,6 +185,9 @@ def html_summary(tracklist, rejects, savepath, manualBool):
 
 
 def html_comparison(listoffiles, savepath):
+    print("DEPRECATED")
+    return 0
+
     filenames = [i[0].name[:-2] for i in listoffiles]
 
     manual = [build_property_array(file, 'manual_velo') for file in listoffiles]
