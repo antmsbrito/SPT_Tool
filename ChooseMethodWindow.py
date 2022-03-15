@@ -6,8 +6,8 @@ Antonio Brito @ BCB lab ITQB
 import tkinter as tk
 from EllipseGUI import ellipseGUI
 from CSVGUI import csvGUI
-from loadGUI import loadGUI
-from BatchGUI import batchGUI
+from loadGUI import loadJSON, loadNPY
+from BatchGUI import batchJSON, batchNPY
 
 
 # Class that inherits root window class from tk
@@ -17,6 +17,7 @@ class ChooseWindow(tk.Tk):
      - .csv predrawn ellipse from fiji
      - draw ellipses in-situ
      - load previous analyzed data to compare or reanalyze
+     - batch load npys for several analysis
     """
     def __init__(self):
         super().__init__()  # init of tk.Tk
@@ -28,17 +29,24 @@ class ChooseWindow(tk.Tk):
         status_text = tk.Label(master=self, text="Choose how to input ellipse data")
         status_text.pack(side='top', fill='both')
 
-        CSV_button = tk.Button(master=self, text="Input CSV", command=self.csv)
+        CSV_button = tk.Button(master=self, text="Input ellipse CSV", command=self.csv)
         CSV_button.pack(side='top', fill='both')
 
-        ELLIPSE_button = tk.Button(master=self, text="Draw Ellipses", command=self.ellipse)
+        ELLIPSE_button = tk.Button(master=self, text="Draw Ellipses (xml + tif)", command=self.ellipse)
         ELLIPSE_button.pack(side='top', fill='both')
 
-        LOAD_button = tk.Button(master=self, text="Load .npy data", command=self.loadnpy)
+        LOADjson_button = tk.Button(master=self, text="Load .npy data (.npy [Legacy])", command=self.loadjson)
+        LOADjson_button.pack(side='top', fill='both')
+
+        BATCHjson_button = tk.Button(master=self, text="Batch analysis (load several .npy [Legacy])", command=self.batchjson)
+        BATCHjson_button.pack(side='top', fill='both')
+
+        LOAD_button = tk.Button(master=self, text="Load .npy data (.npy [Legacy])", command=self.loadnpy)
         LOAD_button.pack(side='top', fill='both')
 
-        BATCH_button = tk.Button(master=self, text="Batch analysis", command=self.batch)
+        BATCH_button = tk.Button(master=self, text="Batch analysis (load several .npy [Legacy])", command=self.batch)
         BATCH_button.pack(side='top', fill='both')
+
 
     def csv(self):
         """
@@ -54,6 +62,23 @@ class ChooseWindow(tk.Tk):
         """
         self.destroy()
         gui = ellipseGUI()
+        gui.mainloop()
+
+    def loadjson(self):
+        """
+        Open next GUI window for inputting one or more .npy files of previously loaded data
+        """
+        self.destroy()
+        gui = loadGUI()
+        gui.mainloop()
+
+    def batchjson(self):
+        """
+        Opens next GUI window for batch analysis of several conditions
+        """
+
+        self.destroy()
+        gui = batchGUI()
         gui.mainloop()
 
     def loadnpy(self):
@@ -72,6 +97,7 @@ class ChooseWindow(tk.Tk):
         self.destroy()
         gui = batchGUI()
         gui.mainloop()
+
 
 
 if __name__ == '__main__':

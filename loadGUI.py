@@ -14,7 +14,7 @@ from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
 
 
 # Class that inherits root window class from tk
-class loadGUI(tk.Tk):
+class loadNPY(tk.Tk):
 
     def __init__(self):
         super().__init__()  # init of tk.Tk
@@ -101,6 +101,12 @@ class loadGUI(tk.Tk):
             self.destroy()
             exit()
 
+
+class loadJSON(tk.Tk):
+
+    def __init__(self):
+        super().__init__()  # init of tk.Tk
+        # TODO
 
 if __name__ == '__main__':
     pass

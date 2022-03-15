@@ -8,7 +8,7 @@ from ReportBuilder import html_summary, makeimage, npy_builder
 
 
 # Class that inherits root window class from tk
-class batchGUI(tk.Tk):
+class batchNPY(tk.Tk):
 
     def __init__(self):
         super().__init__()  # init of tk.Tk
@@ -48,15 +48,24 @@ class batchGUI(tk.Tk):
             manual = True if self.TrackObjects[0][0].manual_velo else False
             html_summary(self.TrackObjects[0], [], savepath, manual)
             npy_builder(self.TrackObjects[0], None, savepath)
+            # TODO add csv
+            # TODO add json
             self.destroy()
             exit()
         else:
-            all_arr = np.array([])
+            all_arr = np.array([]) # TODO check if this for loop works for both branches
             for obj in self.TrackObjects:
                 all_arr = np.append(all_arr, obj)
             manual = True if all_arr[0].manual_velo else False
             html_summary(all_arr, [], savepath, manual)
             npy_builder(all_arr, None, savepath)
+            # TODO add csv
+            # TODO add json
             self.destroy()
             exit()
 
+# Class that inherits root window class from tk
+class batchJSON(tk.Tk):
+
+    def __init__(self):
+        super().__init__()  # init of tk.Tk

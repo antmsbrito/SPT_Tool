@@ -72,7 +72,8 @@ class analysisGUI(tk.Tk):
         html_summary(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
         # 3 - csv file with results
         #csv_results() # TODO add csv
-        # 4 -
+        # 4 - JSON dump
+        #json_dump() # todo add json
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()
