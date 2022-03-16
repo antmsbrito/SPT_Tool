@@ -244,24 +244,28 @@ def hd5_dump(tracklist, rejects, savepath):
     track_group = hf.create_group('tracks')
     rejects_group = hf.create_group('rejects')
 
+    dt = h5py.special_dtype(vlen=str)
+
     for tr in tracklist:
         track_subfolder = hf.create_group(f'tracks/{tr.name}')
-        track_subfolder.create_dataset('x', data=tr.x)
-        track_subfolder.create_dataset('y', data=tr.y)
-        track_subfolder.create_dataset('samplerate', data=tr.samplerate)
-        track_subfolder.create_dataset('image', data=np.array(tr.imageobject))
-        track_subfolder.create_dataset('name', data=tr.name)
-        track_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse))
-        track_subfolder.create_dataset('manual_sections', data=tr.manual_sections)
 
-    for tr in rejects_group:
+        track_subfolder.create_dataset('x', data=tr.x) # np array
+        track_subfolder.create_dataset('y', data=tr.y) # np array
+        track_subfolder.create_dataset('samplerate', data=np.array([tr.samplerate])) # float
+        track_subfolder.create_dataset('image', data=np.array(tr.imageobject)) # np array
+        track_subfolder.create_dataset('name', data=tr.name, dtype=dt) # string
+        track_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse), dtype=dt) # string
+        track_subfolder.create_dataset('manual_sections', data=np.array(tr.manual_sections)) # np array
+
+    for tr in rejects:
         rejects_subfolder = hf.create_group(f'rejects/{tr.name}')
-        rejects_subfolder.create_dataset('x', data=tr.x)
-        rejects_subfolder.create_dataset('y', data=tr.y)
-        rejects_subfolder.create_dataset('samplerate', data=tr.samplerate)
-        rejects_subfolder.create_dataset('image', data=np.array(tr.imageobject))
-        rejects_subfolder.create_dataset('name', data=tr.name)
-        rejects_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse))
+
+        rejects_subfolder.create_dataset('x', data=tr.x) # np array
+        rejects_subfolder.create_dataset('y', data=tr.y) # np array
+        rejects_subfolder.create_dataset('samplerate', data=np.array([tr.samplerate])) # float
+        rejects_subfolder.create_dataset('image', data=np.array(tr.imageobject)) # np array
+        rejects_subfolder.create_dataset('name', data=tr.name, dtype=dt)
+        rejects_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse), dtype=dt)
 
     hf.close()
 
