@@ -213,7 +213,7 @@ class DrawingEllipses(tk.Toplevel):
         self.x_clicks = []
         self.y_clicks = []
 
-        #  Check if we have more tracks other wise finish up the gui
+        #  Check if we have more tracks otherwise finish up the gui
         if self.rawdata[-1] == self.rawdata[self.current_track]:
             self.elidict[self.current_track] = {'x0': self.x0 * 0.08, 'y0': self.y0 * 0.08, 'major': self.major * 0.08,
                                                 'minor': self.minor * 0.08, 'angle': np.rad2deg(self.angle)}

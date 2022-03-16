@@ -10,7 +10,7 @@ from datetime import date
 
 import numpy as np
 from tracks import *
-from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder
+from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder, hd5_dump
 
 
 # Class that inherits root window class from tk
@@ -87,6 +87,7 @@ class loadNPY(tk.Tk):
             if self.makeimagesvar:
                 makeimage(self.TrackObjects[0], savepath, manual)
             npy_builder(self.TrackObjects[0], None, savepath)
+            hd5_dump(self.TrackObjects[0], [], savepath)
             self.destroy()
             exit()
         else:
@@ -98,15 +99,36 @@ class loadNPY(tk.Tk):
             if self.makeimagesvar:
                 makeimage(all_arr, savepath, manual)
             npy_builder(all_arr, None, savepath)
+            hd5_dump(all_arr, [], savepath)
             self.destroy()
             exit()
 
 
-class loadJSON(tk.Tk):
-
+class loadHD5(tk.Tk):
     def __init__(self):
         super().__init__()  # init of tk.Tk
-        # TODO
+
+        self.wm_title("Load data")
+        self.title("Load data")
+        self.geometry('350x75')
+
+        self.numberofh5 = tk.IntVar()
+        self.LabelText = tk.StringVar()
+        self.LabelText.set(f"{self.numberofh5.get()} files loaded")
+
+        self.TrackObjects = []
+        self.filenames = []
+
+        self.makeimagesvar = tk.IntVar()
+
+        self.init_input()
+        self.init_output()
+
+    def init_input(self):
+        pass
+
+    def init_output(self):
+        pass
 
 if __name__ == '__main__':
     pass

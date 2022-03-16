@@ -10,7 +10,7 @@ from datetime import date
 
 from tracks import *
 from GUI_ManualSectioning import ManualSectioning
-from ReportBuilder import html_summary, npy_builder
+from ReportBuilder import html_summary, npy_builder, hd5_dump
 
 
 class analysisGUI(tk.Tk):
@@ -73,7 +73,7 @@ class analysisGUI(tk.Tk):
         # 3 - csv file with results
         #csv_results() # TODO add csv
         # 4 - JSON dump
-        #json_dump() # todo add json
+        hd5_dump(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()

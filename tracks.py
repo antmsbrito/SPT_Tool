@@ -48,6 +48,7 @@ class TrackV2:
     def ellipse(self):
         return self._ellipse
 
+    # This allows me to update the measurements ONLY when the ellipse value is changed
     @ellipse.setter
     def ellipse(self, new_value):
         self._ellipse = new_value
@@ -406,13 +407,6 @@ class Track:
             # COBYLA (linear but more stable), trust-constr (gradient descent with barrier methods)
             result = minimize(self.objective_function, x0=initialguess, args=(xpoint, ypoint), method='COBYLA',
                               constraints=nlc)
-
-            # TODO Add exception clauses in case optimization is not a success
-            #  TODO add options to minimization algorithm
-            # TODO sometimes the algorithm skips a solution especially when using higher order methods (
-            #   SLSQP) check alternatives
-            # TODO Profile and optimize above code; banach fixed point iteration may
-            #    prove faster and easier to implement but harder to explain to biologists
 
             cpoints.append(result.x)
 

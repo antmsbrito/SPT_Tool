@@ -6,6 +6,8 @@ ITQB-UNL BCB 2021
 
 import base64
 import os
+import h5py
+import json
 from datetime import datetime
 from io import BytesIO
 
@@ -83,7 +85,6 @@ def html_summary(tracklist, rejects, savepath, manualBool):
     disp_array = BDA(tracklist, 'disp_velo')
     n, bins, patches = plt.hist(x=disp_array, bins='auto', density=True, alpha=0.1)
     plt.plot(buildhistogram(bins), n, 'b', linewidth=1, label="Displacement")
-
 
     plt.xlabel('Velocity (nm/s)')
     plt.ylabel('PDF')
@@ -202,7 +203,6 @@ def html_comparison(listoffiles, savepath):
     fig.savefig(tmpfile, format='png')
     enc_minmax = base64.b64encode((tmpfile.getvalue())).decode('utf8')
 
-
     if manual[0]:
         fig, ax = plt.subplots()
         manualdata = pd.DataFrame({'Velocity frequency (nm/s)': list(manual[0]) + list(manual[1]),
@@ -237,6 +237,37 @@ def npy_builder(tracklist, rejects, savepath):
     return
 
 
+def hd5_dump(tracklist, rejects, savepath):
+    # TODO
+    hf = h5py.File(f'{savepath}\\DataDump.h5', 'w')
+
+    track_group = hf.create_group('tracks')
+    rejects_group = hf.create_group('rejects')
+
+    for tr in tracklist:
+        track_subfolder = hf.create_group(f'tracks/{tr.name}')
+        track_subfolder.create_dataset('x', data=tr.x)
+        track_subfolder.create_dataset('y', data=tr.y)
+        track_subfolder.create_dataset('samplerate', data=tr.samplerate)
+        track_subfolder.create_dataset('image', data=np.array(tr.imageobject))
+        track_subfolder.create_dataset('name', data=tr.name)
+        track_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse))
+        track_subfolder.create_dataset('manual_sections', data=tr.manual_sections)
+
+    for tr in rejects_group:
+        rejects_subfolder = hf.create_group(f'rejects/{tr.name}')
+        rejects_subfolder.create_dataset('x', data=tr.x)
+        rejects_subfolder.create_dataset('y', data=tr.y)
+        rejects_subfolder.create_dataset('samplerate', data=tr.samplerate)
+        rejects_subfolder.create_dataset('image', data=np.array(tr.imageobject))
+        rejects_subfolder.create_dataset('name', data=tr.name)
+        rejects_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse))
+
+    hf.close()
+
+    return
+
+
 def makeimage(tracklist, savepath, MANUALbool):
     """Image of each track"""
 
@@ -249,9 +280,9 @@ def makeimage(tracklist, savepath, MANUALbool):
             ax1.imshow(tr.imageobject, cmap='gray')
         ax1.plot(tr.x / 0.08, tr.y / 0.08, color='b', label="Track")
 
-        xeli, yeli = tr.xellipse/0.08, tr.yellipse/0.08
+        xeli, yeli = tr.xellipse / 0.08, tr.yellipse / 0.08
         # https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
-        cumulative_disp = np.cumsum(np.sqrt(np.diff(xeli*0.08*1000) ** 2 + np.diff(yeli*0.08*1000) ** 2))
+        cumulative_disp = np.cumsum(np.sqrt(np.diff(xeli * 0.08 * 1000) ** 2 + np.diff(yeli * 0.08 * 1000) ** 2))
         points = np.array([xeli, yeli]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
         norm = plt.Normalize(cumulative_disp.min(), cumulative_disp.max())
@@ -277,7 +308,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         xaxis = np.linspace(1, len(tr.unwrapped) * tr.samplerate, len(tr.unwrapped))
         ax2.plot(xaxis, (tr.unwrapped - tr.unwrapped[0]) * 1000, label="Original")
         sm = smoothing(tr.unwrapped, int((len(tr.unwrapped) * 20) // 100))
-        smoothedxaxis = np.linspace(1, len(sm) * tr.samplerate, len(sm))    
+        smoothedxaxis = np.linspace(1, len(sm) * tr.samplerate, len(sm))
         smoothedxaxis += tr.samplerate * (len(xaxis) - len(smoothedxaxis)) / 2
         ax2.plot(smoothedxaxis, (sm - sm[0]) * 1000, label="Smoothed")
         delimeters = findallpeaks(sm)
@@ -325,10 +356,10 @@ def makeimage(tracklist, savepath, MANUALbool):
                             f'Manual average = {avgmanual:.2f} nm/s',
                             f'Average distance to ellipse {average_dist:.2f} nm',
                             f'Total distance traveled {cumulative_disp[-1]:.2f} nm',
-                            f'Total displacement {np.sqrt((xeli[-1]-xeli[0])**2+(yeli[-1]-yeli[0])**2)*0.08*1000:.2f} nm'))
+                            f'Total displacement {np.sqrt((xeli[-1] - xeli[0]) ** 2 + (yeli[-1] - yeli[0]) ** 2) * 0.08 * 1000:.2f} nm'))
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax6.text(0, 0, rawtxt, fontsize=20, bbox=props)
-        ax6.set_ylim((0,0.4))
+        ax6.set_ylim((0, 0.4))
         ax6.axis('off')
 
         plt.tight_layout()
