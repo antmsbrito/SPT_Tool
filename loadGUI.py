@@ -87,7 +87,7 @@ class loadNPY(tk.Tk):
         if self.numberofnpy.get() == 1:
             manual = True if self.TrackObjects[0][0].manual_velo else False
             html_summary(self.TrackObjects[0], [], savepath, manual)
-            if self.makeimagesvar.get()==1:
+            if self.makeimagesvar:
                 makeimage(self.TrackObjects[0], savepath, manual)
             npy_builder(self.TrackObjects[0], None, savepath)
             hd5_dump(self.TrackObjects[0], [], savepath)
@@ -99,7 +99,7 @@ class loadNPY(tk.Tk):
                 all_arr = np.append(all_arr, obj)
             manual = True if all_arr[0].manual_velo else False
             html_summary(all_arr, [], savepath, manual)
-            if self.makeimagesvar.get()==1:
+            if self.makeimagesvar:
                 makeimage(all_arr, savepath, manual)
             npy_builder(all_arr, None, savepath)
             hd5_dump(all_arr, [], savepath)
@@ -181,7 +181,7 @@ class loadHD5(tk.Tk):
 
         manual = True if self.TrackObjects[0].manual_velo else False
         html_summary(self.TrackObjects, [], savepath, manual)
-        if self.makeimagesvar.get()==1:
+        if self.makeimagesvar:
             makeimage(self.TrackObjects, savepath, manual)
         npy_builder(self.TrackObjects, None, savepath)
         hd5_dump(self.TrackObjects, [], savepath)
