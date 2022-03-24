@@ -374,3 +374,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         sv = os.path.join(savepath, name)
         fig.savefig(sv)
         plt.close(fig)
+
+
+def csv_dump(tracklist, rejects, savepath, manualBool):
+    return 0

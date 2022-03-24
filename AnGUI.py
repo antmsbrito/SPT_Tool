@@ -10,7 +10,7 @@ from datetime import date
 
 from tracks import *
 from GUI_ManualSectioning import ManualSectioning
-from ReportBuilder import html_summary, npy_builder, hd5_dump
+from ReportBuilder import html_summary, npy_builder, hd5_dump, csv_dump
 
 
 class analysisGUI(tk.Tk):
@@ -68,12 +68,12 @@ class analysisGUI(tk.Tk):
         # What to save?
         # 1 - array of Track objects (.npy) to reload for reanalysis or comparison between condition (for legacy purposes)
         npy_builder(self.TrackList, self.RejectedTracks, self.savepath)
-        # 2 - general html report DONE #TODO improve it
+        # 2 - general html report DONE #TODO improve it through jupiter
         html_summary(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
-        # 3 - csv file with results
-        #csv_results() # TODO add csv
+        # 3 - csv file with results TODO
+        csv_dump(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
         # 4 - JSON dump
-        hd5_dump(self.TrackList, self.RejectedTracks, self.savepath, self.manual_var.get())
+        hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
 
         tk.messagebox.showinfo(title="All done!", message="All done! Check folder for full report data.")
         self.destroy()
