@@ -4,7 +4,7 @@ from datetime import date
 
 
 from tracks import *
-from ReportBuilder import html_summary, makeimage, npy_builder, hd5_dump
+from ReportBuilder import html_summary, makeimage, npy_builder, hd5_dump, csv_dump
 
 
 # Class that inherits root window class from tk
@@ -48,7 +48,7 @@ class batchNPY(tk.Tk):
             manual = True if self.TrackObjects[0][0].manual_velo else False
             html_summary(self.TrackObjects[0], [], savepath, manual)
             npy_builder(self.TrackObjects[0], None, savepath)
-            # TODO add csv
+            csv_dump(self.TrackObjects[0], None, savepath, manual)
             hd5_dump(self.TrackObjects[0], [], savepath)
             self.destroy()
             exit()
@@ -60,7 +60,7 @@ class batchNPY(tk.Tk):
             html_summary(all_arr, [], savepath, manual)
             npy_builder(all_arr, None, savepath)
             hd5_dump(all_arr, [], savepath)
-            # TODO add csv
+            csv_dump(all_arr, None, savepath, manual)
             self.destroy()
             exit()
 
@@ -69,3 +69,4 @@ class batchHD5(tk.Tk):
 
     def __init__(self):
         super().__init__()  # init of tk.Tk
+        # TODO build batch hd5's
