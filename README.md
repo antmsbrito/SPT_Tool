@@ -1,15 +1,15 @@
 # SPT_Tool
-###### Built in Python 3.8.10
+### Semi-automated analysis of the kinetics and dynamics of peptidoglycan synthases of S. aureus
+#### Built in Python 3.9
 
-### Requirements 
-###### 
-
+###
+### Requirements
 ### Setup instructions:
 ###### 1. Install Anaconda3
 ###### 2. Clone or Download as zip this project
 ###### 3. Open anaconda3 prompt terminal inside SPT_Tool directory
 ###### 4. Create a new environment (optional)
-###### `conda create -n env_name python=3.8.10`
+###### `conda create -n env_name python=3.9`
 ###### 5. Activate environment (optional)
 ###### `conda activate env_name`
 ###### 6. Install requirements from file
@@ -21,4 +21,9 @@
 ###### `conda activate env_name`
 ###### 3. Use SPT_tool
 ###### `python ChooseMethodWindow.py`
+###### 4. There are several options to continue, but all of them assume a trackmate .xml file
 
+
+###NOTE:
+###### .npy files may not load properly if they were built with older library versions
+###### Using a virtual environment is not necessary but strongly advised 
