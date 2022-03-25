@@ -5,7 +5,6 @@ Antonio Brito @ BCB lab ITQB
 
 import tkinter as tk
 from EllipseGUI import ellipseGUI
-from CSVGUI import csvGUI
 from loadGUI import loadHD5, loadNPY
 from BatchGUI import batchHD5, batchNPY
 
@@ -29,9 +28,6 @@ class ChooseWindow(tk.Tk):
         status_text = tk.Label(master=self, text="Choose how to input ellipse data")
         status_text.pack(side='top', fill='both')
 
-        CSV_button = tk.Button(master=self, text="Input ellipse CSV", command=self.csv)
-        CSV_button.pack(side='top', fill='both')
-
         ELLIPSE_button = tk.Button(master=self, text="Draw Ellipses (xml + tif)", command=self.ellipse)
         ELLIPSE_button.pack(side='top', fill='both')
 
@@ -46,15 +42,6 @@ class ChooseWindow(tk.Tk):
 
         BATCH_button = tk.Button(master=self, text="Batch analysis (load several .npy [Legacy])", command=self.batchnpy)
         BATCH_button.pack(side='top', fill='both')
-
-
-    def csv(self):
-        """
-        Open next GUI window for inputting xml and csv data
-        """
-        self.destroy()
-        gui = csvGUI()
-        gui.mainloop()
 
     def ellipse(self):
         """

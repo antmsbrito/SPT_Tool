@@ -3,8 +3,9 @@ SPT_Tool 2021
 Antonio Brito @ BCB lab ITQB
 """
 
-from scipy.signal import find_peaks
+from scipy.signal import savgol_filter
 from scipy.stats import linregress
+from scipy.optimize import brute
 import numpy as np
 
 
@@ -17,95 +18,138 @@ def smoothing(unsmoothed, windowsize):
     return smoothed
 
 
-def findallpeaks(y):
-    """
-    Helper function for the minmax method
-
-    Calculates all minimums,maximums and inflexion points of an array. Since they are the delimiters for
-    slope calculations they ignore points at the very start and at the very end.
-    Care is also taken to remove consecutive points.
-    """
-
-    peaks1, _ = find_peaks(y)
-    peaks2, _ = find_peaks(y * -1)
-    peaks = np.union1d(peaks2, peaks1)
-
-    grady = np.gradient(y)
-    peaks3, _ = find_peaks(grady)
-    peaks4, _ = find_peaks(grady * -1)
-    inflexion = np.union1d(peaks3, peaks4)
-
-    allpeaks = np.union1d(peaks, inflexion)
-    allpeaks = np.sort(allpeaks)
-
-    # If peak is at the start or at the end just ignore them
-    if allpeaks[0] == 1:
-        allpeaks = allpeaks[1:]
-    if allpeaks[-1] == len(y) - 2:
-        allpeaks = allpeaks[:-1]
-
-    final_peaks = []
-    # If peaks are consecutive ignore the smaller one
-    for idx, d in enumerate(allpeaks):
-        try:
-            nd = allpeaks[idx + 1]
-        except IndexError:
-            final_peaks.append(d)
-            break  # continue
-        if nd - d == 1:
-            continue
-        else:
-            final_peaks.append(d)
-
-    return np.array(final_peaks)
-
-
-def slope(x, y):
+def slope_and_mse(x, y):
     """
     Helper function for minmax method
     Calculates the slope of a line given x and y coordinates
     """
     s, o, r_value, p_value, std_err = linregress(x, y)
-    return s, o
+    ypred = s * x + o
+    mse = np.average((y - ypred) ** 2)
+    return s, mse
+
+
+def objective_function(x, *args):
+    xcoord = args[0]
+    ycoord = args[1]
+
+    # Make sure x is a list of integers (indexes of breakpoints)
+    x = [int(r) for r in x]
+
+    # Solution must have with UNIQUE indexes
+    if not len(np.unique(x)) == len(x):
+        return np.inf
+
+    # Indexes MUST be sorted
+    # https://stackoverflow.com/questions/3755136/pythonic-way-to-check-if-a-list-is-sorted-or-not
+    if not all(x[i] <= x[i + 1] for i in range(len(x) - 1)):
+        return np.inf
+
+    # Breakpoints must be far apart (here 2 points in between each breakpoint)
+    if np.any(np.diff(x, prepend=0, append=len(xcoord) - 1) < 4):
+        return np.inf
+
+    # Measure mean squared displacement between sections
+    _, mse = breakpoint_regression(xcoord, ycoord, x)
+
+    # sanity check, number of sections = number of breakpoints + 1
+    assert len(mse) == len(x) + 1
+
+    # mean of the mean squared errors of each section?
+    # try median? how to penalize for number of sections?
+    # Maybe try sqrt(mse) => um of each trackpoint => 0.04um localization error is acceptable?
+    # Right now= weighted average by the length of each section
+    avg_mse = np.average(mse, weights=np.diff(x, prepend=0, append=len(xcoord) - 1))
+
+    return avg_mse
+
+
+def bruteforce(x, y):
+    all_velos = []
+    opt_results = []
+
+    ysmooth = y  # savgol_filter(y, 5, 2)  # arbitrary for now
+
+    # Check 0 breakpoints since it might be better
+    v, e = slope_and_mse(x, y)
+    all_velos.append(v)
+    opt_results.append({'fval': e, 'x': [0, -1]})
+
+    # Check 1-4 breakpoints
+    # Calculating breakpoint on a smoothed trajectory
+    # Velocity calculations are on the real trajectory
+    for sec_n in range(1, 4):
+        optimum = brute(objective_function, ranges=(slice(0, len(x) - 1, 1),) * sec_n, args=(x, ysmooth))
+
+        # Make sure the result is a list of ints
+        if isinstance(optimum, float):
+            optimum = [optimum]
+        optimum = [int(r) for r in optimum]
+
+        vv, e1 = breakpoint_regression(x, y, optimum)
+        all_velos.append(vv)
+
+        e2 = objective_function(optimum, x, y)
+        # Sanity check
+        assert np.average(e1, weights=np.diff(optimum, prepend=0, append=len(x) - 1)) == e2
+
+        opt_results.append({'fval': e2, 'x': optimum})
+
+    # Analyze all number of breakpoints and choose the min error
+    errors = [r['fval'] for r in opt_results]
+    velocity = all_velos[np.argmin(errors)]
+    sections = [r['x'] for r in opt_results][np.argmin(errors)]
+
+    return velocity, errors[np.argmin(errors)], sections
 
 
 def minmax(track):
-    """Breakpoint regression where delimiters are given by
-    maximums, minimums and inflexion points
-    """
+    ycoordinate = track.unwrapped
+    xcoordinate = np.array(range(len(ycoordinate))) * track.samplerate
 
-    yaxis = smoothing(track.unwrapped, int((len(track.unwrapped) * 20) // 100))
-    xaxis = np.array(range(len(yaxis))) * track.samplerate
-    delimiter = findallpeaks(yaxis)
-
-    return breakpoint_regression(xaxis, yaxis, delimiter)
+    # Test no sectioning
+    velob4, errorb4 = slope_and_mse(xcoordinate, ycoordinate)
+    if errorb4 < 0.05:  # arbitrary for now
+        # error is ok!
+        return np.abs([velob4]) * 1000, []
+    else:
+        # brute force
+        veloaf, erroraf, finaldelimiters = bruteforce(xcoordinate, ycoordinate)
+        return veloaf, finaldelimiters
 
 
 def breakpoint_regression(x, y, delimiter):
     """
-    Given a set of delimiters (min, max and inflexion points), calculates the slopes between those delimiters
+    Given a set of delimiters (min, max and inflexion points), calculates the slopes
+    and mean squared errors between those delimiters
     """
 
     section_velocity = []
+    section_mse = []
 
-    if not delimiter.size:  # is empty
-        m, b = slope(x, y)
-        section_velocity.append(m)
+    if delimiter == [0, -1]:  # is empty or delimiters are beginning and end
+        ve, er = slope_and_mse(x, y)
+        section_velocity.append(ve)
+        section_mse.append(er)
     else:
-        m, b = slope(x[0:delimiter[0]], y[0:delimiter[0]])
-        section_velocity.append(m)
+        ve, er = slope_and_mse(x[0:delimiter[0]], y[0:delimiter[0]])
+        section_velocity.append(ve)
+        section_mse.append(er)
         for idx, d in enumerate(delimiter):
             if d == delimiter[-1]:
-                m, b = slope(x[d:-1], y[d:-1])
-                section_velocity.append(m)
+                ve, er = slope_and_mse(x[d:-1], y[d:-1])
+                section_velocity.append(ve)
+                section_mse.append(er)
             else:
                 nextd = delimiter[idx + 1]
-                m, b = slope(x[d:nextd], y[d:nextd])
-                section_velocity.append(m)
+                ve, er = slope_and_mse(x[d:nextd], y[d:nextd])
+                section_velocity.append(ve)
+                section_mse.append(er)
 
-    section_velocity = np.abs(section_velocity)
+    section_velocity = np.abs(section_velocity) * 1000
+    section_mse = np.array(section_mse)
 
-    return section_velocity * 1000
+    return section_velocity, section_mse
 
 
 def displacement(track):

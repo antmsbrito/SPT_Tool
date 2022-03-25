@@ -14,32 +14,40 @@ from Analysis import *
 
 class TrackV2:
 
-    def __init__(self, im, x, y, samplerate, name, ellipse=None):
+    def __init__(self, im, x, y, samplerate, name, ellipse=None, previousdata=None):
+
+        # Raw data
         self.imageobject = im
         self.x = np.array(x)
         self.y = np.array(y)
         self.xypairs = np.array([np.array([xc, yc]) for xc, yc in zip(self.x, self.y)])
-
         self.name = name
         self.samplerate = float(samplerate)
 
+        # Two dimensional statistics
         self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (
-                    len(np.diff(self.y)) * self.samplerate)
+                len(np.diff(self.y)) * self.samplerate)
         self.twodposition = np.array([np.sqrt(np.square(p[0]) + np.square(p[1])) for p in self.xypairs])
         self.msd = self.msd_calc(self.xypairs)
-        self.msd_alpha = slope(np.log10(np.arange(1, 20) * 3), np.log10(self.msd[1:20]))[0]
+        self.msd_alpha, _ = slope_and_mse(np.log10(np.arange(1, 20) * 3), np.log10(self.msd[1:20]))
 
+        # Ellipse and 3D stats
         self._ellipse = ellipse
         self.xy_ellipse = None
         self.xellipse = None
         self.yellipse = None
         self.z = None
         self.unwrapped = None
-        self.minmax_velo = None
-        self.disp_velo = None
 
+        # Velocities
+        # Is this data new?
+        if previousdata is not None:
+            self.minmax_velo, self.minmax_sections = previousdata
+        else:
+            self.minmax_velo, self.minmax_sections = [], []
         self.manual_sections = []
         self.manual_velo = []
+        self.disp_velo = None
 
         if self._ellipse is not None:
             self.update()
@@ -48,7 +56,7 @@ class TrackV2:
     def ellipse(self):
         return self._ellipse
 
-    # This allows me to update the measurements ONLY when the ellipse value is changed
+    # This allows me to update the measurements ONLY when the ellipse value is assigned to anything except None
     @ellipse.setter
     def ellipse(self, new_value):
         self._ellipse = new_value
@@ -120,7 +128,6 @@ class TrackV2:
         self.xellipse, self.yellipse = np.array(list(zip(*self.xy_ellipse)))
         self.z = self.calculatez()
         self.unwrapped = self.unwrapper()
-        self.minmax_velo = minmax(self)
         self.manual_sections = [] if not self.manual_sections else self.manual_sections
         self.manual_velo = [] if not self.manual_sections else self.manual_sections
         self.disp_velo = displacement(self)
@@ -223,14 +230,18 @@ class TrackV2:
         the ellipse to a circle! Then we just iterate the method 3-4 times to yield the final point.
         The current implementation NEEDS an ellipse centered at (0,0) with horizontal major axis.
         """
+        # center
         px = abs(p[0])
         py = abs(p[1])
 
+        # constant
         t = math.pi / 4
 
+        # axis, a is horizontal
         a = semi_major
         b = semi_minor
 
+        # 3 iterations
         for x in range(0, 3):
             x = a * math.cos(t)
             y = b * math.sin(t)
@@ -262,6 +273,8 @@ class TrackV2:
 
 
 class Track:
+    """ STAYS HERE FOR LEGACY PURPOSES """
+
     def __init__(self, ellipse, trackx, tracky, samplerate, trackname, image):
 
         # Name based on file
