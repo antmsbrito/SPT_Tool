@@ -87,10 +87,6 @@ class loadNPY(tk.Tk):
 
         if not self.numberofnpy.get():
             tk.messagebox.showerror(title="NPY", message="No file loaded!")
-        else:
-            savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-            savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
-            os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:
             self.destroy()
@@ -185,9 +181,6 @@ class loadHD5(tk.Tk):
         self.destroy()
         analysisapp = analysisGUI(self.TrackObjects, [])
         analysisapp.mainloop()
-
-
-
 
 
 if __name__ == '__main__':
