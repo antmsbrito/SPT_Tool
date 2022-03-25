@@ -23,6 +23,7 @@ sns.set_style("ticks")
 
 from tracks import *
 
+
 def buildhistogram(bins):
     centerbins = []
     for idx, bini in enumerate(bins):
@@ -113,7 +114,8 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax2 = fig.add_subplot(2, 3, 2)
         xaxis = np.array(range(len(tr.unwrapped))) * tr.samplerate
         ax2.plot(xaxis, (tr.unwrapped - tr.unwrapped[0]) * 1000, label="Raw data")
-        ax2.vlines(x=xaxis[tr.minmax_sections], ymin=0, ymax=(tr.unwrapped[tr.minmax_sections] - tr.unwrapped[0]) * 1000, colors='r')
+        ax2.vlines(x=xaxis[tr.minmax_sections], ymin=0,
+                   ymax=(tr.unwrapped[tr.minmax_sections] - tr.unwrapped[0]) * 1000, colors='r')
         ax2.set_xlabel("Time (sec)")
         ax2.set_ylabel("Unwrapped trajectory (nm)")
         ax2.legend()
@@ -140,7 +142,6 @@ def makeimage(tracklist, savepath, MANUALbool):
             ax4.legend()
         else:
             ax4 = fig.add_subplot(2, 3, 4)
-
 
         ax5 = fig.add_subplot(2, 3, 5)
         minmax_array = np.hstack([tr.minmax_velo for tr in tracklist])
@@ -177,5 +178,24 @@ def makeimage(tracklist, savepath, MANUALbool):
         plt.close('all')
 
 
-def csv_dump(tracklist, rejects, savepath, manualBool):
-    return 0
+def csv_dump(tracklist, savepath):
+    namelist = [tr.name for tr in tracklist]
+    lengthlist = [len(tr.x) for tr in tracklist]
+    twodspeedlist = [tr.twodspeed * 1000 for tr in tracklist]
+    msdalphalist = [tr.msd_alpha for tr in tracklist]
+    anglelist = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in tracklist]))
+    dispvelolist = [np.average(tr.disp_velo) for tr in tracklist]
+    manualvelolist = [np.average(tr.manual_velo )for tr in tracklist]
+    manualseclist = [len(tr.manual_sections) for tr in tracklist]
+    minmaxvelolist = [np.average(tr.minmax_velo) for tr in tracklist]
+    minmaxseclist = [len(tr.minmax_sections) for tr in tracklist]
+
+    d = {'Name/ID': namelist, 'Track Length': lengthlist, '2D velocity (nm/s)': twodspeedlist,
+         'MSD alpha':msdalphalist, 'Angle (deg)': anglelist, 'Displacement velocity (nm/s)': dispvelolist,
+         'Manual Velocity (nm/s)':manualvelolist, 'Manual Sections':manualseclist,
+         'MinMax Velocity (nm/s)':minmaxvelolist, 'MinMax Sections': minmaxseclist}
+
+    df = pd.DataFrame(data=d)
+    df.to_excel(savepath+os.sep+"DataDump.xlsx", index=False, float_format="%.2f")
+
+    return

@@ -114,7 +114,7 @@ class analysisGUI(tk.Tk):
         # 2 - TODO jupiter
 
         # 3 - csv file with results TODO
-        csv_dump(self.TrackList, self.RejectedTracks, self.savepath, manualboolean)
+        csv_dump(self.TrackList, self.savepath)
 
         # 4 - JSON dump
         hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
