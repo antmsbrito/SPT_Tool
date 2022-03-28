@@ -14,6 +14,8 @@ from GUI_ManualSectioning import ManualSectioning
 from Analysis import minmax
 from ReportBuilder import makeimage, npy_builder, hd5_dump, csv_dump
 
+# test
+from tqdm import tqdm
 
 class analysisGUI(tk.Tk):
     """
@@ -80,15 +82,16 @@ class analysisGUI(tk.Tk):
             print(f"Optimizing breakpoint locations...")
             print(f"Using {os.cpu_count()} cpu cores")
             start = time.time()
-            try:
-                pool = Pool(os.cpu_count())
-                outputs = pool.map(minmax, self.TrackList)
-                for idx, out in enumerate(outputs):
-                    tr = self.TrackList[idx]
-                    tr.minmax_velo, tr.minmax_sections = out
-            finally:
-                pool.close()
-                pool.join()
+            with Pool(processes=os.cpu_count()) as pool:
+                progress_bar = tqdm(total=len(self.TrackList))
+                print("Mapping tracks to cores ...")
+                results = tqdm(pool.imap(minmax, self.TrackList), total=len(self.TrackList))
+                print("Calculating ...")
+                iterable = tuple(results)  # fetch the lazy results
+
+            for idx, out in enumerate(iterable):
+                tr = self.TrackList[idx]
+                tr.minmax_velo, tr.minmax_sections = out
 
             end = time.time()
             print(f"Breakpoint optimization in {end-start:.2f} seconds")
