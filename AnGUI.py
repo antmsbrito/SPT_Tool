@@ -82,9 +82,13 @@ class analysisGUI(tk.Tk):
             print(f"Optimizing breakpoint locations...")
             print(f"Using {os.cpu_count()} cpu cores")
             start = time.time()
+
+            # Optimizations
             with Pool(processes=os.cpu_count()) as pool:
                 iterable = tuple(tqdm(pool.imap(minmax, self.TrackList), total=len(self.TrackList)))
 
+            # Save results (not really efficient but has to be this way to have decent progress bar)
+            # Overhead shouldnt be that bad
             for idx, out in enumerate(iterable):
                 tr = self.TrackList[idx]
                 tr.minmax_velo, tr.minmax_sections = out
