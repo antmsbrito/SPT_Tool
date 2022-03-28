@@ -3,19 +3,16 @@ SPT_Tool 2021
 Antonio Brito @ BCB lab ITQB
 """
 
-import tkinter as tk
-
 import os
+import time
 from datetime import date
+import tkinter as tk
+from multiprocessing import Pool
 
 from tracks import *
 from GUI_ManualSectioning import ManualSectioning
 from Analysis import minmax
 from ReportBuilder import makeimage, npy_builder, hd5_dump, csv_dump
-
-# TEST TODO
-import time
-from multiprocessing import Pool
 
 
 class analysisGUI(tk.Tk):
@@ -86,7 +83,6 @@ class analysisGUI(tk.Tk):
             try:
                 pool = Pool(os.cpu_count())
                 outputs = pool.map(minmax, self.TrackList)
-                print(outputs)
                 for idx, out in enumerate(outputs):
                     tr = self.TrackList[idx]
                     tr.minmax_velo, tr.minmax_sections = out
@@ -113,7 +109,7 @@ class analysisGUI(tk.Tk):
 
         # 2 - TODO jupiter
 
-        # 3 - csv file with results TODO
+        # 3 - csv file with results
         csv_dump(self.TrackList, self.savepath)
 
         # 4 - JSON dump

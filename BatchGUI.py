@@ -40,6 +40,7 @@ class batchNPY(tk.Tk):
 
     def analyze(self):
         # TODO
+        print("Function in development")
         return
         savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
         savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")

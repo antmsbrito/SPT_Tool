@@ -177,7 +177,6 @@ class DrawingEllipses(tk.Toplevel):
                 if self.minor > self.major:
                     self.minor, self.major = self.major, self.minor
 
-                # TODO recheck angle for the 1000 time just to be sure
                 eli = patches.Ellipse((self.x0, self.y0), self.major, self.minor, np.rad2deg(self.angle), fill=False,
                                       edgecolor='black', alpha=0.3)
                 ax.add_patch(eli)
