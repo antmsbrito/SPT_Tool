@@ -83,11 +83,7 @@ class analysisGUI(tk.Tk):
             print(f"Using {os.cpu_count()} cpu cores")
             start = time.time()
             with Pool(processes=os.cpu_count()) as pool:
-                progress_bar = tqdm(total=len(self.TrackList))
-                print("Mapping tracks to cores ...")
-                results = tqdm(pool.imap(minmax, self.TrackList), total=len(self.TrackList))
-                print("Calculating ...")
-                iterable = tuple(results)  # fetch the lazy results
+                iterable = tuple(tqdm(pool.imap(minmax, self.TrackList), total=len(self.TrackList)))
 
             for idx, out in enumerate(iterable):
                 tr = self.TrackList[idx]
