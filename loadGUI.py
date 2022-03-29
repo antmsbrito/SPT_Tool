@@ -90,7 +90,8 @@ class loadNPY(tk.Tk):
 
         if self.numberofnpy.get() == 1:
             self.destroy()
-            analysisapp = analysisGUI(self.TrackObjects[0], [])
+            npyname = self.filenames[-1].split('/')[-1][:-4]
+            analysisapp = analysisGUI(self.TrackObjects[0], [], os.path.join(r"C:\Users\António\Desktop\h5", npyname))
             analysisapp.mainloop()
         else:
             all_arr = np.array([])
