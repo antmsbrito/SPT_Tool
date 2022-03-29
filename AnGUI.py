@@ -17,13 +17,12 @@ from ReportBuilder import makeimage, npy_builder, hd5_dump, csv_dump
 # test
 from tqdm import tqdm
 
-
 class analysisGUI(tk.Tk):
     """
     Class that inherits root window class from tk
     """
 
-    def __init__(self, tracks, rejected_tracks, opt_name=None):
+    def __init__(self, tracks, rejected_tracks):
         super().__init__()  # init of tk.Tk
 
         self.TrackList = tracks
@@ -42,13 +41,9 @@ class analysisGUI(tk.Tk):
         self.manual_velo_array = np.nan
         self.minmax_velo_array = np.nan
 
-        if opt_name == None:
-            self.savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-            self.savepath = os.path.join(self.savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}")
-            os.makedirs(self.savepath, exist_ok=True)
-        else:
-            self.savepath = opt_name
-            os.makedirs(self.savepath, exist_ok=False)
+        self.savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
+        self.savepath = os.path.join(self.savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}")
+        os.makedirs(self.savepath, exist_ok=True)
 
         self.init_options()
 
@@ -99,7 +94,7 @@ class analysisGUI(tk.Tk):
                 tr.minmax_velo, tr.minmax_sections = out
 
             end = time.time()
-            print(f"Breakpoint optimization in {end - start:.2f} seconds")
+            print(f"Breakpoint optimization in {end-start:.2f} seconds")
 
             """
             for tr in self.TrackList:
