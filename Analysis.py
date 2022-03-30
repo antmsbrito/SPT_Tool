@@ -18,7 +18,7 @@ def smoothing(unsmoothed, windowsize):
     return smoothed
 
 
-def slope_and_mse(x, y):
+def slope_and_mse(x, y, Rbool=False):
     """
     Helper function for minmax method
     Calculates the slope of a line given x and y coordinates
@@ -26,7 +26,11 @@ def slope_and_mse(x, y):
     s, o, r_value, p_value, std_err = linregress(x, y)
     ypred = s * x + o
     mse = np.average((y - ypred) ** 2)
-    return s, mse
+
+    if Rbool:
+        return s, mse, r_value
+    else:
+        return s, mse
 
 
 def objective_function(x, *args):
@@ -108,8 +112,8 @@ def minmax(track):
     xcoordinate = np.array(range(len(ycoordinate))) * track.samplerate
 
     # Test no sectioning
-    velob4, errorb4 = slope_and_mse(xcoordinate, ycoordinate)
-    if errorb4 < 0.05:  # arbitrary for now
+    velob4, errorb4, rsquared = slope_and_mse(xcoordinate, ycoordinate, RBool=True)
+    if errorb4 < 0.05 or rsquared**2 >= 0.9 or True:
         # error is ok!
         return np.abs([velob4]) * 1000, []
     else:
