@@ -92,7 +92,7 @@ class analysisGUI(tk.Tk):
             # Overhead shouldnt be that bad
             for idx, out in enumerate(iterable):
                 tr = self.TrackList[idx]
-                tr.minmax_velo, tr.minmax_sections = out
+                tr.bruteforce_velo, tr.bruteforce_phi, tr.muggeo_velo, tr.muggeo_phi, tr.muggeo_params = out
 
             end = time.time()
             print(f"Breakpoint optimization in {end-start:.2f} seconds")

@@ -5,9 +5,7 @@ ITQB-UNL BCB 2021
 """
 
 import math
-import pandas as pd
 import xml.etree.ElementTree as ET
-from scipy.optimize import minimize, NonlinearConstraint
 
 from Analysis import *
 
