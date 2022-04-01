@@ -102,7 +102,7 @@ def minmax(track):
     velob4, errorb4, rsquared = slope_and_mse(xcoordinate, ycoordinate, True)
     if rsquared ** 2 >= 0.9:
         # error is ok!
-        return np.abs([velob4]) * 1000, []
+        return np.abs([velob4]) * 1000, [], np.abs([velob4]) * 1000, [], {}
     else:
         # Try muggeo et al method
         # https://www.researchgate.net/publication/10567491_Estimating_Regression_Models_with_Unknown_Break-Points
