@@ -106,9 +106,10 @@ def minmax(track):
     else:
         # Try muggeo et al method
         # https://www.researchgate.net/publication/10567491_Estimating_Regression_Models_with_Unknown_Break-Points
-        brutevelo, brutephi, mugparam = muggeo(xcoordinate, ycoordinate)
+        mugvelo, mugphi, mugparam = muggeo(xcoordinate, ycoordinate)
         # brute force
-        mugvelo, mugphi = bruteforce(xcoordinate, ycoordinate)
+        brutevelo, brutephi = bruteforce(xcoordinate, ycoordinate)
+
         return brutevelo, brutephi, mugvelo, mugphi, mugparam
 
 
