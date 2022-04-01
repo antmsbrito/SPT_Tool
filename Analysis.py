@@ -169,7 +169,7 @@ def muggeo(x, y):
             V.append(np.array([-1 if i > p else 0 for i in ZxW]))
 
         parameters = np.hstack((alpha, beta, gamma, b))
-        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V, w), method='lm')
+        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
 
         if not opt.success:
             print('oops')
@@ -212,8 +212,8 @@ def muggeo(x, y):
     for p, idx in enumerate(phi):
         if Z[3] < p < Z[-4]:
             finalphi.append(p)
-            finalvelo.append(velo[idx])  # b4 breakpoint
-            finalvelo.append(velo[idx + 1])  # after breakpoint
+            finalvelo.append(velo[idx]*1000)  # b4 breakpoint
+            finalvelo.append(velo[idx + 1]*1000)  # after breakpoint
 
     finalvelo = np.unique(finalvelo)
 
