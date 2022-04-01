@@ -68,7 +68,7 @@ class ellipseGUI(tk.Tk):
             while not image:
                 image = self.load_image(xml)
 
-        self.TrackList = np.append(self.TrackList, Track.generator_xml(xml, image))
+        self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, image))
         self.NumberOfImages.set(len(self.TrackList))
         self.LabelText.set(f"{self.NumberOfImages.get()} images loaded")
 
