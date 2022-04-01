@@ -240,6 +240,8 @@ def displacement(track):
     # In reality we should be looking to regions of flatness
     # Plateaus of slope zero which indicate constant velocity
 
-    velo = smoothing(displacement_ / track.samplerate, int((len(displacement_) * 30) // 100))
+    velo = displacement_ / track.samplerate
+    window = int(len(displacement_) * 30) // 100
+    velo = np.convolve(velo, np.ones(window) / window, mode='valid')
 
     return velo * 1000

@@ -13,8 +13,6 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from Analysis import smoothing
-
 
 # Class that inherits root window class from tk
 class ManualSectioning(tk.Toplevel):
@@ -196,6 +194,10 @@ class ManualSectioning(tk.Toplevel):
         s, b, r_value, p_value, std_err = linregress(x, y)
         return s, b
 
+    @staticmethod
+    def smoothing(unsmoothed, windowsize):
+        smoothed = np.convolve(unsmoothed, np.ones(windowsize)/windowsize, mode='valid')
+        return smoothed
 
 if __name__ == '__main__':
     app = ManualSectioning()
