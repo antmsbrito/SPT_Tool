@@ -143,52 +143,53 @@ def breakpoint_regression(x, y, delimiter):
 
 def muggeo(x, y):
     # assume 3 b.p.s
-    phi = [[5, 15, 25]]
+    phi = np.array([5, 15, 25])
     Z = x
     response = savgol_filter(y, 7, 2)
 
-    w1 = np.array([1 if i >= phi[0][0] else 0 for i in Z])
-    w2 = np.array([1 if i >= phi[0][1] else 0 for i in Z])
-    w3 = np.array([1 if i >= phi[0][2] else 0 for i in Z])
+    w1 = np.array([1 if i >= phi[0] else 0 for i in Z])
+    w2 = np.array([1 if i >= phi[1] else 0 for i in Z])
+    w3 = np.array([1 if i >= phi[2] else 0 for i in Z])
     w = np.array([w1, w2, w3])
 
-    alpha = [5]
-    beta = [np.array([1, 1, 1])]
-    gamma = [np.array([1, 1, 1])]
-    b = [0]
+    alpha = 3
+    beta = np.array([1, 1, 1])
+    gamma = np.array([1, 1, 1])
+    b = 0
 
     itercount = 0
-    lr = 0.65
-    while not np.any(np.abs(gamma[-1]) < 1e-6) or np.all(np.abs(gamma[-1]) > 1e-3):  # All below 1e-3 or one below 1e-6
+    damper = 0.65
+    while not np.any(np.abs(gamma) < 1e-6) or np.all(np.abs(gamma) > 1e-3):  # All below 1e-3 or one below 1e-6
         U = []
         V = []
 
-        for idx, p in enumerate(phi[-1]):
+        for idx, p in enumerate(phi):
             ZxW = Z * w[idx]
             U.append(np.maximum(0, ZxW - p))
             V.append(np.array([-1 if i > p else 0 for i in ZxW]))
 
-        parameters = np.hstack((alpha[-1], beta[-1], gamma[-1], b[-1]))
-        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
+        parameters = np.hstack((alpha, beta, gamma, b))
+        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V, w), method='lm')
 
         if not opt.success:
             print('oops')
             break
 
-        alpha.append(opt.x[0])
-        beta.append(opt.x[1:4])
-        gamma.append(opt.x[4:7])
-        b.append(opt.x[-1])
+        alpha = opt.x[0]
+        beta = opt.x[1:4]
+        gamma = opt.x[4:7]
+        b = opt.x[-1]
 
-        newphi = phi + lr * gamma / beta
+        newphi = phi + damper * gamma / beta
 
         if itercount > 5000:
             print("max iter")
             print('iter', itercount)
             break
         elif np.any(np.abs(newphi - phi) < 1e-12) or np.all(np.abs(newphi - phi) < 1e-6):
-            if lr < 1:
-                lr = 1
+            print("atol")
+            print(np.abs(newphi - phi))
+            break
 
         phi = newphi
         w1 = np.array([1 if i >= phi[0] else 0 for i in Z])
@@ -197,15 +198,26 @@ def muggeo(x, y):
         w = np.array([w1, w2, w3])
         itercount += 1
 
-    finalphi = phi[-1]
-    velo = [alpha[-1]]
+    pars = {'alpha': alpha, 'beta': beta,
+            'gamma': gamma, 'b': b, 'phi': phi}
+
+    velo = [alpha]
     for i in range(3):
-        velo.append(alpha[-1] + np.sum(beta[0:i + 1]))
+        velo.append(alpha + np.sum(beta[0:i + 1]))
 
-    pars = {'alpha': alpha[-1], 'beta': beta[-1],
-            'gamma': gamma[-1], 'b': b[-1]}
+    finalvelo = []
+    finalphi = []
+    # Check phi's which are 'good' aka between the time domain
+    # Take velocities which are to the right and left of those
+    for p, idx in enumerate(phi):
+        if Z[3] < p < Z[-4]:
+            finalphi.append(p)
+            finalvelo.append(velo[idx])  # b4 breakpoint
+            finalvelo.append(velo[idx + 1])  # after breakpoint
 
-    return velo, finalphi, pars
+    finalvelo = np.unique(finalvelo)
+
+    return finalvelo, finalphi, pars
 
 
 def residuals(x, Zarray, responsearray, Uarray, Varray):
