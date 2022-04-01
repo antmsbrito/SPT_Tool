@@ -183,12 +183,12 @@ def muggeo(x, y):
         newphi = phi + damper * gamma / beta
 
         if itercount > 5000:
-            print("max iter")
-            print('iter', itercount)
+            #print("max iter")
+            #print('iter', itercount)
             break
         elif np.any(np.abs(newphi - phi) < 1e-12) or np.all(np.abs(newphi - phi) < 1e-6):
-            print("atol")
-            print(np.abs(newphi - phi))
+            #print("atol")
+            #print(np.abs(newphi - phi))
             break
 
         phi = newphi
