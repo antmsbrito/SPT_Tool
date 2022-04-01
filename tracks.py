@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from Analysis import *
 
 
-class Track:
+class TrackV2:
 
     def __init__(self, im, x, y, samplerate, name, ellipse=None):
 

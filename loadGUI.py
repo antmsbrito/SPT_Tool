@@ -17,6 +17,8 @@ from ReportBuilder import makeimage, npy_builder, hd5_dump
 from AnGUI import analysisGUI
 
 
+
+
 # Class that inherits root window class from tk
 class loadNPY(tk.Tk):
 
@@ -66,7 +68,8 @@ class loadNPY(tk.Tk):
         self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
         objs = np.load(npy, allow_pickle=True)
 
-        newobjs = [Track(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse, (t.minmax_velo, t.minmax_sections)) for t in objs]
+        newobjs = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse)
+                   for t in objs]
 
         for t in objs:
             newobjs.append(t)
@@ -82,7 +85,7 @@ class loadNPY(tk.Tk):
 
             if hasattr(t, 'manual_velo'):
                 newobjs[-1].manual_velo = t.manual_velo
-                newobjs[-1].manual_phi = t.manual_phi
+                newobjs[-1].manual_sections = t.manual_sections
 
         self.TrackObjects.append(newobjs)
 
@@ -107,7 +110,6 @@ class loadNPY(tk.Tk):
 class loadHD5(tk.Tk):
     def __init__(self):
         super().__init__()  # init of tk.Tk
-
 
         self.wm_title("Load data")
         self.title("Load data")
