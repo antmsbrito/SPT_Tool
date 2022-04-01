@@ -59,8 +59,8 @@ class ManualSectioning(tk.Toplevel):
         SR = self.alltracks[self.current_track].samplerate
         y = self.alltracks[self.current_track].unwrapped
         x = np.array(range(len(y))) * SR
-        smoothedy = smoothing(y, int((len(y) * 10) // 100))
-        smoothedx = np.array(range(len(smoothedy))) * SR + 0.05*x[-1]
+        smoothedy = self.smoothing(y, int((len(y) * 10) // 100))
+        smoothedx = np.array(range(len(smoothedy))) * SR + 0.05 * x[-1]
 
         ax = fig.add_subplot()
         ax.plot(x, y, color='r')
@@ -116,7 +116,7 @@ class ManualSectioning(tk.Toplevel):
             SR = self.alltracks[self.current_track].samplerate
             y = self.alltracks[self.current_track].unwrapped
             x = np.array(range(len(y))) * SR
-            smoothedy = smoothing(y, int((len(y) * 10) // 100))
+            smoothedy = self.smoothing(y, int((len(y) * 10) // 100))
             smoothedx = np.array(range(len(smoothedy))) * SR + 0.05 * x[-1]
 
             ax.plot(x, y, color='r')
@@ -145,34 +145,34 @@ class ManualSectioning(tk.Toplevel):
             SR = tr.samplerate
             rawy = tr.unwrapped
             rawx = np.array(range(len(rawy))) * SR
-            y = smoothing(rawy, int((len(rawy) * 10) // 100))
+            y = self.smoothing(rawy, int((len(rawy) * 10) // 100))
             x = np.array(range(len(y))) * SR + 0.05 * rawx[-1]
 
             if not delimiter.size:
                 m, b = self.slope(x, y)
-                self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
-                self.section_velocity.append(m*1000)
+                self.alltracks[idx].manual_velo.append(np.abs(m) * 1000)
+                self.section_velocity.append(m * 1000)
                 # plt.plot(x, x * m + b)
             else:
                 m, b = self.slope(x[0:delimiter[0]], y[0:delimiter[0]])
                 # plt.plot(x[0:delimiter[0]], x[0:delimiter[0]] * m + b)
-                self.section_velocity.append(m*1000)
-                self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
+                self.section_velocity.append(m * 1000)
+                self.alltracks[idx].manual_velo.append(np.abs(m) * 1000)
                 for idx2, d in enumerate(delimiter):
                     if d == delimiter[-1]:
                         m, b = self.slope(x[d:-1], y[d:-1])
                         # plt.plot(x[d:-1], x[d:-1] * m + b)
-                        self.section_velocity.append(m*1000)
-                        self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
+                        self.section_velocity.append(m * 1000)
+                        self.alltracks[idx].manual_velo.append(np.abs(m) * 1000)
                     else:
                         nextd = delimiter[idx2 + 1]
                         m, b = self.slope(x[d:nextd], y[d:nextd])
-                        self.section_velocity.append(m*1000)
-                        self.alltracks[idx].manual_velo.append(np.abs(m)*1000)
+                        self.section_velocity.append(m * 1000)
+                        self.alltracks[idx].manual_velo.append(np.abs(m) * 1000)
                         # plt.plot(x[d:next], x[d:next] * m + b)
             # plt.show()
 
-        #save histogram
+        # save histogram
         self.section_velocity = np.abs(self.section_velocity)
 
     @staticmethod
@@ -196,8 +196,9 @@ class ManualSectioning(tk.Toplevel):
 
     @staticmethod
     def smoothing(unsmoothed, windowsize):
-        smoothed = np.convolve(unsmoothed, np.ones(windowsize)/windowsize, mode='valid')
+        smoothed = np.convolve(unsmoothed, np.ones(windowsize) / windowsize, mode='valid')
         return smoothed
+
 
 if __name__ == '__main__':
     app = ManualSectioning()
