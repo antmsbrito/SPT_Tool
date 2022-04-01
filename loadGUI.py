@@ -66,6 +66,7 @@ class loadNPY(tk.Tk):
 
         self.numberofnpy.set(self.numberofnpy.get() + 1)
         self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
+        self.filenames.append(npy)
         objs = np.load(npy, allow_pickle=True)
 
         newobjs = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse)
