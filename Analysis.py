@@ -169,7 +169,7 @@ def muggeo(x, y):
             V.append(np.array([-1 if i > p else 0 for i in ZxW]))
 
         parameters = np.hstack((alpha[-1], beta[-1], gamma[-1], b[-1]))
-        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V, w), method='lm')
+        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
 
         if not opt.success:
             print('oops')
