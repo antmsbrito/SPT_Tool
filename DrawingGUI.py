@@ -139,7 +139,8 @@ class DrawingEllipses(tk.Toplevel):
 
         # Connect msd calculations to variables
         self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
-        self.msd_text.set(f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n Smaller OR equal to 1 corresponds to diffusive motion")
+        self.msd_text.set(f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to "
+                          f"directional motion \n Smaller OR equal to 1 corresponds to diffusive motion")
 
     def clickGraph(self, event):
         if event.inaxes is not None:
@@ -280,8 +281,8 @@ class DrawingEllipses(tk.Toplevel):
 
         self.msd_alpha.set(self.rawdata[self.current_track].msd_alpha)
         self.msd_text.set(
-        f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n "
-        f"Smaller OR equal to 1 corresponds to diffusive motion")
+            f"MSD alpha is {self.msd_alpha.get():2f} \n A value bigger than 1 corresponds to directional motion \n "
+            f"Smaller OR equal to 1 corresponds to diffusive motion")
 
     def finishup(self):
         for idx, tr in enumerate(self.rawdata):

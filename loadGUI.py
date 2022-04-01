@@ -34,8 +34,6 @@ class loadNPY(tk.Tk):
         self.TrackObjects = []
         self.filenames = []
 
-        self.previousvar = tk.IntVar()
-
         self.init_input()
         self.init_output()
 
@@ -49,10 +47,6 @@ class loadNPY(tk.Tk):
         ANALYZE_button = tk.Button(master=frame_input, text="Analyze .npy files", command=self.analyze)
         ANALYZE_button.pack(fill='x', expand=True)
 
-        PREVIOUSDATA_tick = tk.Checkbutton(master=frame_input, text="Is there previous data?",
-                                           variable=self.previousvar, onvalue=1, offvalue=0)
-        PREVIOUSDATA_tick.pack(anchor='w')
-
     def init_output(self):
         frame_output = tk.Frame(self)
         frame_output.pack(fill='both', expand=True, side='right')
@@ -63,25 +57,34 @@ class loadNPY(tk.Tk):
     def loadnpy(self):
 
         npy = tk.filedialog.askopenfilename(initialdir="C:", title="Select .npy file to load")
-        if not npy[-3:] == "npy":
+
+        while not npy[-3:] == "npy":
             tk.messagebox.showerror(title="NPY", message="File extension must be .npy")
-        else:
-            self.numberofnpy.set(self.numberofnpy.get() + 1)
-            self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
-            objs = np.load(npy, allow_pickle=True)
-            if isinstance(objs[0], Track):
-                if self.previousvar.get() == 1:
-                    print("Old track data found, can't load previous data")
-                newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
-                self.TrackObjects.append(newObjects)
-            else:
-                if self.previousvar.get() == 1:
-                    newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse,
-                                          (t.minmax_velo, t.minmax_sections)) for t in objs]
-                else:
-                    newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse) for t in objs]
-                self.TrackObjects.append(newObjects)
-            self.filenames.append(npy)
+            npy = tk.filedialog.askopenfilename(initialdir="C:", title="Select .npy file to load")
+
+        self.numberofnpy.set(self.numberofnpy.get() + 1)
+        self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
+        objs = np.load(npy, allow_pickle=True)
+
+        newobjs = [Track(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse, (t.minmax_velo, t.minmax_sections)) for t in objs]
+
+        for t in objs:
+            newobjs.append(t)
+
+            if hasattr(t, 'bruteforce_velo'):
+                newobjs[-1].bruteforce_velo = t.bruteforce_velo
+                newobjs[-1].bruteforce_phi = t.bruteforce_phi
+
+            if hasattr(t, 'muggeo_velo'):
+                newobjs[-1].muggeo_velo = t.muggeo_velo
+                newobjs[-1].muggeo_phi = t.muggeo_phi
+                newobjs[-1].muggeo_params = t.muggeo_params
+
+            if hasattr(t, 'manual_velo'):
+                newobjs[-1].manual_velo = t.manual_velo
+                newobjs[-1].manual_phi = t.manual_phi
+
+        self.TrackObjects.append(newobjs)
 
     def analyze(self):
 
@@ -104,6 +107,7 @@ class loadNPY(tk.Tk):
 class loadHD5(tk.Tk):
     def __init__(self):
         super().__init__()  # init of tk.Tk
+
 
         self.wm_title("Load data")
         self.title("Load data")

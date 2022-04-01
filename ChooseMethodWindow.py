@@ -55,14 +55,21 @@ class ChooseWindow(tk.Tk):
         """
         Open next GUI window for inputting one or more .npy files of previously loaded data
         """
+        # TODO
+        print("WIP")
+        return
+
         self.destroy()
         gui = loadHD5()
         gui.mainloop()
 
     def batchhd5(self):
         """
-        Opens next GUI window for batch analysis of several conditions
+        Opens next GUI window for batch analysis of several hd5s
         """
+        # TODO
+        print("WIP")
+        return
 
         self.destroy()
         gui = batchHD5()
@@ -78,8 +85,11 @@ class ChooseWindow(tk.Tk):
 
     def batchnpy(self):
         """
-        Opens next GUI window for batch analysis of several conditions
+        Opens next GUI window for batch analysis of several npys
         """
+        # TODO
+        print("WIP")
+        return
 
         self.destroy()
         gui = batchNPY()

@@ -87,7 +87,8 @@ class analysisGUI(tk.Tk):
             with Pool(processes=os.cpu_count()) as pool:
                 iterable = tuple(tqdm(pool.imap(minmax, self.TrackList), total=len(self.TrackList)))
 
-            # Save results (not really efficient but has to be this way to have decent progress bar)
+            # Save results in another loop
+            # not really efficient but has to be this way to have 'pretty' progress bar with tqdm
             # Overhead shouldnt be that bad
             for idx, out in enumerate(iterable):
                 tr = self.TrackList[idx]

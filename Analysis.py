@@ -5,7 +5,7 @@ Antonio Brito @ BCB lab ITQB
 
 from scipy.signal import savgol_filter
 from scipy.stats import linregress
-from scipy.optimize import brute
+from scipy.optimize import brute, least_squares
 import numpy as np
 
 
@@ -25,6 +25,7 @@ def slope_and_mse(x, y, Rbool=False):
     """
     s, o, r_value, p_value, std_err = linregress(x, y)
     ypred = s * x + o
+
     mse = np.average((y - ypred) ** 2)
 
     if Rbool:
@@ -112,11 +113,14 @@ def minmax(track):
     xcoordinate = np.array(range(len(ycoordinate))) * track.samplerate
 
     # Test no sectioning
-    velob4, errorb4, rsquared = slope_and_mse(xcoordinate, ycoordinate, RBool=True)
-    if errorb4 < 0.05 or rsquared**2 >= 0.9 or True:
+    velob4, errorb4, rsquared = slope_and_mse(xcoordinate, ycoordinate, True)
+    if rsquared ** 2 >= 0.9:
         # error is ok!
         return np.abs([velob4]) * 1000, []
     else:
+        # Try muggeo et al method
+        # https://www.researchgate.net/publication/10567491_Estimating_Regression_Models_with_Unknown_Break-Points
+        veloaf, erroraf, finaldelimiters = muggeo(xcoordinate, ycoordinate)
         # brute force
         veloaf, erroraf, finaldelimiters = bruteforce(xcoordinate, ycoordinate)
         return veloaf, finaldelimiters
@@ -154,6 +158,88 @@ def breakpoint_regression(x, y, delimiter):
     section_mse = np.array(section_mse)
 
     return section_velocity, section_mse
+
+
+def muggeo(x, y):
+    # assume 3 b.p.s
+    phi = [[5, 15, 25]]
+    Z = x
+    response = savgol_filter(y, 7, 2)
+
+    w1 = np.array([1 if i >= phi[0][0] else 0 for i in Z])
+    w2 = np.array([1 if i >= phi[0][1] else 0 for i in Z])
+    w3 = np.array([1 if i >= phi[0][2] else 0 for i in Z])
+    w = np.array([w1, w2, w3])
+
+    alpha = [5]
+    beta = [np.array([1, 1, 1])]
+    gamma = [np.array([1, 1, 1])]
+    b = [0]
+
+    itercount = 0
+    lr = 0.65
+    while not np.any(np.abs(gamma[-1]) < 1e-6) or np.all(np.abs(gamma[-1]) > 1e-3):  # All below 1e-3 or one below 1e-6
+        U = []
+        V = []
+
+        for idx, p in enumerate(phi[-1]):
+            ZxW = Z * w[idx]
+            U.append(np.maximum(0, ZxW - p))
+            V.append(np.array([-1 if i > p else 0 for i in ZxW]))
+
+        parameters = np.hstack((alpha[-1], beta[-1], gamma[-1], b[-1]))
+        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V, w), method='lm')
+
+        if not opt.success:
+            print('oops')
+            break
+
+        alpha.append(opt.x[0])
+        beta.append(opt.x[1:4])
+        gamma.append(opt.x[4:7])
+        b.append(opt.x[-1])
+
+        newphi = phi + lr * gamma / beta
+
+        if itercount > 5000:
+            print("max iter")
+            print('iter', itercount)
+            break
+        elif np.any(np.abs(newphi - phi) < 1e-12) or np.all(np.abs(newphi - phi) < 1e-6):
+            if lr < 1:
+                lr = 1
+
+        phi = newphi
+        w1 = np.array([1 if i >= phi[0] else 0 for i in Z])
+        w2 = np.array([1 if i >= phi[1] else 0 for i in Z])
+        w3 = np.array([1 if i >= phi[2] else 0 for i in Z])
+        w = np.array([w1, w2, w3])
+        itercount += 1
+
+    velo = [alpha[-1]]
+    for i in range(3):
+        velo.append(alpha[-1]+np.sum(beta[-1][0:i+1]))
+
+    finalphi = phi[-1]
+
+    return velo, [], phi
+
+def residuals(x, Zarray, responsearray, Uarray, Varray):
+    alpha = x[0]
+    beta = x[1:4]
+    gamma = x[4:7]
+    b = x[-1]
+
+    pred = Zarray*alpha + b
+
+    for ind, b in enumerate(beta):
+        pred += Uarray[ind]*b
+
+    for ind, g in enumerate(gamma):
+        pred += Varray[ind]*g
+
+
+    return pred - responsearray
 
 
 def displacement(track):

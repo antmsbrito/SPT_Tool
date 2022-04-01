@@ -50,7 +50,7 @@ class Track:
         self.muggeo_phi = []
         self.muggeo_params = {}
 
-        self.manual_sections = []
+        self.manual_phi = []
         self.manual_velo = []
 
         self.disp_velo = []

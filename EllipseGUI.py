@@ -29,6 +29,7 @@ class ellipseGUI(tk.Tk):
         # List of track related objects
         self.TrackList = []
         self.NumberOfImages = tk.IntVar()
+        self.FinalTracks = []
 
         # Text for number of tracks loaded and respective track name
         self.LabelText = tk.StringVar()
@@ -67,7 +68,7 @@ class ellipseGUI(tk.Tk):
             while not image:
                 image = self.load_image(xml)
 
-        self.TrackList = np.append(self.TrackList, TrackV2.generator_xml(xml, image))
+        self.TrackList = np.append(self.TrackList, Track.generator_xml(xml, image))
         self.NumberOfImages.set(len(self.TrackList))
         self.LabelText.set(f"{self.NumberOfImages.get()} images loaded")
 
@@ -89,5 +90,4 @@ class ellipseGUI(tk.Tk):
 
 
 if __name__ == '__main__':
-    app = ellipseGUI()
-    app.mainloop()
+    pass
