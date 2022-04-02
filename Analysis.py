@@ -144,7 +144,7 @@ def breakpoint_regression(x, y, delimiter):
 
 def muggeo(x, y):
     # assume 3 b.p.s
-    phi = np.array([5, 15, 25])
+    phi = np.array([5, 10, 15])
     Z = x
     response = savgol_filter(y, 7, 2)
 
