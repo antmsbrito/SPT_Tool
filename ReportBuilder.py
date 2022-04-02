@@ -144,7 +144,7 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax5.legend()
 
         ax5 = fig.add_subplot(2, 3, 5)
-        brute_array = np.hstack([tr.bruteforce_phi for tr in tracklist])
+        brute_array = np.hstack([tr.bruteforce_velo for tr in tracklist])
         n, bins, pat = ax5.hist(x=brute_array, bins='auto', density=True, alpha=0.2)
         ax5.plot(buildhistogram(bins), n, 'b', linewidth=1, label="Bruteforce Sectioning")
         ax5.vlines(x=tr.bruteforce_velo, colors='b', ymin=0, ymax=np.max(n), alpha=0.4)

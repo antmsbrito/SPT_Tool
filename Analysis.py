@@ -216,10 +216,11 @@ def muggeo(x, y):
 
     if finalphi:
         sane_phi = np.sort(finalphi)
-        finalvelo = breakpoint_regression(Z, y, sane_phi)
+        finalvelo, _ = breakpoint_regression(Z, y, sane_phi)
     else:
+        sane_phi = []
         v, _ = slope_and_mse(Z, y)
-        finalvelo = [v]
+        finalvelo = [np.abs(v)*1000]
 
     return finalvelo, sane_phi, pars
 
