@@ -170,7 +170,13 @@ def muggeo(x, y):
             V.append(np.array([-1 if i > p else 0 for i in ZxW]))
 
         parameters = np.hstack((alpha, beta, gamma, b))
-        opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
+        try:
+            opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
+        except ValueError:
+            # Bail optimization didnt work
+            v, _ = slope_and_mse(x, y)
+            finalvelo = [np.abs(v)*1000]
+            return finalvelo, [], {}
 
         alpha = opt.x[0]
         beta = opt.x[1:4]
@@ -180,7 +186,10 @@ def muggeo(x, y):
         newphi = phi + damper * gamma / beta
 
         if not opt.success:
-            break
+            # Bail optimization didnt work
+            v, _ = slope_and_mse(x, y)
+            finalvelo = [np.abs(v)*1000]
+            return finalvelo, [], {}
         elif itercount > 5000:
             #print("max iter")
             #print('iter', itercount)
