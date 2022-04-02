@@ -206,19 +206,17 @@ def muggeo(x, y):
     for i in range(3):
         velo.append(alpha + np.sum(beta[0:i + 1]))
 
-    finalvelo = []
     finalphi = []
     # Check phi's which are 'good' aka between the time domain
     # Take velocities which are to the right and left of those
-    for p, idx in enumerate(phi):
+    for idx, p in enumerate(phi):
         if Z[3] < p < Z[-4]:
-            finalphi.append(p)
-            finalvelo.append(velo[idx]*1000)  # b4 breakpoint
-            finalvelo.append(velo[idx + 1]*1000)  # after breakpoint
+            idd = (np.abs(Z-p)).argmin()
+            finalphi.append(Z[idd])
+    sane_phi = np.sort(finalphi)
+    finalvelo = breakpoint_regression(Z, y, sane_phi)
 
-    finalvelo = np.unique(finalvelo)
-
-    return finalvelo, finalphi, pars
+    return finalvelo, sane_phi, pars
 
 
 def residuals(x, Zarray, responsearray, Uarray, Varray):
