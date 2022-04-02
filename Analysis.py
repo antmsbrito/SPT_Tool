@@ -210,7 +210,8 @@ def muggeo(x, y):
     for idx, p in enumerate(phi):
         if Z[3] < p < Z[-4]:
             idd = (np.abs(Z-p)).argmin()
-            finalphi.append(idd)
+            if idd not in finalphi:
+                finalphi.append(idd)
 
     if finalphi and opt.success:
         sane_phi = np.sort(finalphi)
