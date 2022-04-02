@@ -172,10 +172,6 @@ def muggeo(x, y):
         parameters = np.hstack((alpha, beta, gamma, b))
         opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
 
-        if not opt.success:
-            print('oops')
-            break
-
         alpha = opt.x[0]
         beta = opt.x[1:4]
         gamma = opt.x[4:7]
@@ -183,7 +179,9 @@ def muggeo(x, y):
 
         newphi = phi + damper * gamma / beta
 
-        if itercount > 5000:
+        if not opt.success:
+            break
+        elif itercount > 5000:
             #print("max iter")
             #print('iter', itercount)
             break
@@ -214,12 +212,12 @@ def muggeo(x, y):
             idd = (np.abs(Z-p)).argmin()
             finalphi.append(idd)
 
-    if finalphi:
+    if finalphi and opt.success:
         sane_phi = np.sort(finalphi)
         finalvelo, _ = breakpoint_regression(Z, y, sane_phi)
     else:
         sane_phi = []
-        v, _ = slope_and_mse(Z, y)
+        v, _ = slope_and_mse(x, y)
         finalvelo = [np.abs(v)*1000]
 
     return finalvelo, sane_phi, pars
