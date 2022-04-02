@@ -213,8 +213,14 @@ def muggeo(x, y):
         if Z[3] < p < Z[-4]:
             idd = (np.abs(Z-p)).argmin()
             finalphi.append(Z[idd])
+
     sane_phi = np.sort(finalphi)
-    finalvelo = breakpoint_regression(Z, y, sane_phi)
+
+    if sane_phi:
+        finalvelo = breakpoint_regression(Z, y, sane_phi)
+    else:
+        v, _ = slope_and_mse(Z, y)
+        finalvelo = [v]
 
     return finalvelo, sane_phi, pars
 
