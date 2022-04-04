@@ -187,6 +187,7 @@ def csv_dump(tracklist, savepath):
     twodspeedlist = [tr.twodspeed * 1000 for tr in tracklist]
     msdalphalist = [tr.msd_alpha for tr in tracklist]
     anglelist = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in tracklist]))
+    radiuslist = [i.ellipse['major']*1000 for i in tracklist]
     dispvelolist = [np.average(tr.disp_velo) for tr in tracklist]
     manualvelolist = [np.average(tr.manual_velo) for tr in tracklist]
     manualseclist = [len(tr.manual_sections) for tr in tracklist]
@@ -196,7 +197,8 @@ def csv_dump(tracklist, savepath):
     mugseclist = [len(tr.muggeo_phi) for tr in tracklist]
 
     d = {'Name/ID': namelist, 'Track Length': lengthlist, '2D velocity (nm/s)': twodspeedlist,
-         'MSD alpha': msdalphalist, 'Angle (deg)': anglelist, 'Displacement velocity (nm/s)': dispvelolist,
+         'MSD alpha': msdalphalist, 'Angle (deg)': anglelist, 'Radius (nm)': radiuslist,
+         'Displacement velocity (nm/s)': dispvelolist,
          'Manual Velocity (nm/s)': manualvelolist, 'Manual Sections': manualseclist,
          'Bruteforce Velocity (nm/s)': brutevelolist, 'Bruteforce Sections': bruteseclist,
          'Muggeo et al Velocity (nm/s):': mugvelolist, 'Muggeo et al Sections:': mugseclist}
