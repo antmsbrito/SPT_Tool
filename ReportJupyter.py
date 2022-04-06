@@ -54,6 +54,7 @@ def showStats(tr):
     plt.hist(angles, density=False)
     plt.xlabel("Angle in degrees")
     plt.ylabel("Frequency")
+    plt.xlim((0,90))
     plt.show()
     
     return 0 
@@ -75,10 +76,10 @@ def Update_Graphs(angle_threshold, all_tracks, angles):
     
     
     print(f"Displacement: {np.average(displacement_velo):.2f} +- {np.std(displacement_velo):.2f} nm/s \n")
-    print(f"Sectioned: {np.average(np.hstack(brute_velo)):.2f} +- {np.std(np.hstack(brute_velo)):.2f} nm/s \n")
-    print(f"Average number of sections of {np.average(brute_sections):.2f}")
-    print(f"Sectioned: {np.average(np.hstack(mug_velo)):.2f} +- {np.std(np.hstack(mug_velo)):.2f} nm/s \n")
-    print(f"Average number of sections of {np.average(mug_sections):.2f}")
+    print(f"Brute force sectioning: {np.average(np.hstack(brute_velo)):.2f} +- {np.std(np.hstack(brute_velo)):.2f} nm/s")
+    print(f"\t Average number of sections of {np.average(brute_sections):.2f} \n")
+    print(f"Muggeo et al sectioning: {np.average(np.hstack(mug_velo)):.2f} +- {np.std(np.hstack(mug_velo)):.2f} nm/s")
+    print(f"\t Average number of sections of {np.average(mug_sections):.2f} \n")
 
     lowangles = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in lowangle_tracks]))
     

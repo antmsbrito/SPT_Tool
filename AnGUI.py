@@ -116,7 +116,8 @@ class analysisGUI(tk.Tk):
         # 3 - csv file with results
         csv_dump(self.TrackList, self.savepath)
 
-        # 4 - JSON dump
+        # 4 - hd5 dump
+        # todo
         hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
 
         # 5 - images
