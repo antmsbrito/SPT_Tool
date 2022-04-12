@@ -25,6 +25,10 @@ def slope_and_mse(x, y, Rbool=False):
         return s, mse
 
 
+def bayesianinfocriteria(error, k, n):
+    return np.log(error) + (k / n) * np.log(n)
+
+
 def bruteforce_objective_function(x, *args):
     xcoord = args[0]
     ycoord = args[1]
@@ -66,7 +70,7 @@ def bruteforce(x, y):
     # Check 0 breakpoints since it might be better
     v, e = slope_and_mse(x, y)
     all_velos.append(v)
-    opt_results.append({'fval': e, 'x': [0, -1]})
+    opt_results.append({'BIC': bayesianinfocriteria(e, 0, len(x)), 'x': [0, -1]})
 
     # Check 1-4 breakpoints
     for sec_n in range(1, 4):
@@ -84,10 +88,10 @@ def bruteforce(x, y):
         # Sanity check
         assert np.average(e1, weights=np.diff(optimum, prepend=0, append=len(x) - 1)) == e2
 
-        opt_results.append({'fval': e2, 'x': optimum})
+        opt_results.append({'BIC': bayesianinfocriteria(e2, sec_n, len(x)), 'x': optimum})
 
-    # Analyze all number of breakpoints and choose the min error
-    errors = [r['fval'] for r in opt_results]
+    # Analyze all number of breakpoints and choose the min BIC
+    errors = [r['BIC'] for r in opt_results]
     velocity = all_velos[np.argmin(errors)]
     sections = [r['x'] for r in opt_results][np.argmin(errors)]
 
@@ -173,9 +177,9 @@ def muggeo(x, y):
         try:
             opt = least_squares(residuals, x0=parameters, args=(Z, response, U, V), method='lm')
         except ValueError:
-            # Bail optimization didnt work
+            # Bail optimization didnt work # TODO why? was it bad x0?
             v, _ = slope_and_mse(x, y)
-            finalvelo = [np.abs(v)*1000]
+            finalvelo = [np.abs(v) * 1000]
             return finalvelo, [], {}
 
         alpha = opt.x[0]
@@ -183,31 +187,30 @@ def muggeo(x, y):
         gamma = opt.x[4:7]
         b = opt.x[-1]
 
+        # Not mentioned in the original paper, I added a damper term to decrease instabilities
+        # It slows down convergence but makes the algorithm more stable
+        # The final result should be the same
         newphi = phi + damper * gamma / beta
 
         if not opt.success:
             # Bail optimization didnt work
             v, _ = slope_and_mse(x, y)
-            finalvelo = [np.abs(v)*1000]
+            finalvelo = [np.abs(v) * 1000]
             return finalvelo, [], {}
-        elif itercount > 5000:
-            #print("max iter")
-            #print('iter', itercount)
+        elif itercount > 5000 or np.any(np.abs(newphi - phi) < 1e-12) or np.all(np.abs(newphi - phi) < 1e-6):
+            # Reached max iterations or phi is not changing
+            phi = newphi
             break
-        elif np.any(np.abs(newphi - phi) < 1e-12) or np.all(np.abs(newphi - phi) < 1e-6):
-            #print("atol")
-            #print(np.abs(newphi - phi))
-            break
+        else:
+            phi = newphi
+            w1 = np.array([1 if i >= phi[0] else 0 for i in Z])
+            w2 = np.array([1 if i >= phi[1] else 0 for i in Z])
+            w3 = np.array([1 if i >= phi[2] else 0 for i in Z])
+            w = np.array([w1, w2, w3])
+            itercount += 1
 
-        phi = newphi
-        w1 = np.array([1 if i >= phi[0] else 0 for i in Z])
-        w2 = np.array([1 if i >= phi[1] else 0 for i in Z])
-        w3 = np.array([1 if i >= phi[2] else 0 for i in Z])
-        w = np.array([w1, w2, w3])
-        itercount += 1
-
-    pars = {'alpha': alpha, 'beta': beta,
-            'gamma': gamma, 'b': b, 'phi': phi}
+    finalpars = {'alpha': alpha, 'beta': beta,
+                 'gamma': gamma, 'b': b, 'phi': phi}
 
     velo = [alpha]
     for i in range(3):
@@ -215,22 +218,22 @@ def muggeo(x, y):
 
     finalphi = []
     # Check phi's which are 'good' aka between the time domain
-    # Take velocities which are to the right and left of those
+    # Approximate those Phi's to real values in Z
     for idx, p in enumerate(phi):
         if Z[3] < p < Z[-4]:
-            idd = (np.abs(Z-p)).argmin()
+            idd = (np.abs(Z - p)).argmin()
             if idd not in finalphi:
                 finalphi.append(idd)
 
-    if finalphi and opt.success:
+    if finalphi and opt.success: # Did we get successfull optimization AND finalphi is not empty?
         sane_phi = np.sort(finalphi)
         finalvelo, _ = breakpoint_regression(Z, y, sane_phi)
     else:
         sane_phi = []
         v, _ = slope_and_mse(x, y)
-        finalvelo = [np.abs(v)*1000]
+        finalvelo = [np.abs(v) * 1000]
 
-    return finalvelo, sane_phi, pars
+    return finalvelo, sane_phi, finalpars
 
 
 def residuals(x, Zarray, responsearray, Uarray, Varray):
