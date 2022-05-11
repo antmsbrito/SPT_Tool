@@ -190,7 +190,7 @@ def csv_dump(tracklist, savepath):
     radiuslist = [i.ellipse['major']*1000 for i in tracklist]
     dispvelolist = [np.average(tr.disp_velo) for tr in tracklist]
     manualvelolist = [np.average(tr.manual_velo) for tr in tracklist]
-    manualseclist = [len(tr.manual_sections) for tr in tracklist]
+    manualseclist = [len(tr.manual_phi) for tr in tracklist]
     brutevelolist = [np.average(tr.bruteforce_velo) for tr in tracklist]
     bruteseclist = [len(tr.bruteforce_phi) for tr in tracklist]
     mugvelolist = [np.average(tr.muggeo_velo) for tr in tracklist]
