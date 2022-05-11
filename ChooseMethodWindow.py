@@ -87,9 +87,6 @@ class ChooseWindow(tk.Tk):
         """
         Opens next GUI window for batch analysis of several npys
         """
-        # TODO
-        print("WIP")
-        return
 
         self.destroy()
         gui = batchNPY()

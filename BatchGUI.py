@@ -58,9 +58,9 @@ class batchNPY(tk.Tk):
         for obj in self.TrackObjects:
             all_arr = np.append(all_arr, obj)
         manual = True if all_arr[0].manual_velo else False
-        npy_builder(all_arr, None, savepath)
+        npy_builder(all_arr, [], savepath)
         hd5_dump(all_arr, [], savepath)
-        csv_dump(all_arr, None, savepath, manual)
+        csv_dump(all_arr, None, savepath)
         self.destroy()
         exit()
 
