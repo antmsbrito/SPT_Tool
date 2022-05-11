@@ -85,7 +85,7 @@ class ellipseGUI(tk.Tk):
 
         self.FinalTracks = drawing_window.track_classes
         self.destroy()
-        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects)
+        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects, "DataDump")
         analysisapp.mainloop()
 
 
