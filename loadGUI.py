@@ -84,7 +84,7 @@ class loadNPY(tk.Tk):
 
             if hasattr(t, 'manual_velo'):
                 newobjs[-1].manual_velo = t.manual_velo
-                newobjs[-1].manual_sections = t.manual_sections
+                newobjs[-1].manual_phi = t.manual_phi
 
         self.TrackObjects.append(newobjs)
 
