@@ -247,9 +247,7 @@ class DrawingEllipses(tk.Toplevel):
             self.redraw_graph()
 
     def redraw_graph(self, pxmin=0, pxmax=2 ** 8):
-        print(pxmax)
         ax = self.canvas.figure.axes[0]
-
         ax.lines = []
         ax.images = []
         ax.patches = []
