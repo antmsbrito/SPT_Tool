@@ -21,7 +21,7 @@ class TrackV2:
         self.xypairs = np.array([np.array([xc, yc]) for xc, yc in zip(self.x, self.y)])
         self.name = name
         self.samplerate = float(samplerate)
-        self.timeaxis = np.array(range(len(x))) * samplerate
+        self.timeaxis = np.array(range(len(x))) * self.samplerate
 
         # Two dimensional statistics
         self.twodspeed = np.sum(np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2)) / (
