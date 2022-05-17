@@ -108,8 +108,8 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax1.add_patch(eli)
         ax1.set_xlabel("x coordinates (px)")
         ax1.set_ylabel("y coordinates (px)")
-        ax1.set_xlim((np.average(tr.x / 0.08) - 20, np.average(tr.x / 0.08) + 20))
-        ax1.set_ylim((np.average(tr.y / 0.08) - 20, np.average(tr.y / 0.08) + 20))
+        ax1.set_xlim((np.average(tr.x / 0.08) - 10, np.average(tr.x / 0.08) + 10))
+        ax1.set_ylim((np.average(tr.y / 0.08) - 10, np.average(tr.y / 0.08) + 10))
         ax1.set_aspect('equal')
         ax1.legend()
 
