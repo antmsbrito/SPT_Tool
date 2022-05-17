@@ -163,7 +163,8 @@ def makeimage(tracklist, savepath, MANUALbool):
                             f'Manual average = {avgmanual:.2f} nm/s',
                             f'Average distance to ellipse {np.mean(dist2eli):.2f} nm',
                             f'Total distance traveled {cumulative_disp[-1]:.2f} nm',
-                            f'Total displacement {np.sqrt((xeli[-1] - xeli[0]) ** 2 + (yeli[-1] - yeli[0]) ** 2) * 0.08 * 1000:.2f} nm'))
+                            f'Total displacement {np.sqrt((xeli[-1] - xeli[0]) ** 2 + (yeli[-1] - yeli[0]) ** 2) * 0.08 * 1000:.2f} nm',
+                            f'Angle to imaging plane {np.rad2deg(np.arccos(tr.ellipse["minor"]/tr.ellipse["major"])):.2f}'))
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax6.text(0, 0, rawtxt, fontsize=20, bbox=props)
         ax6.set_ylim((0, 0.4))
