@@ -13,7 +13,10 @@ from PIL import Image
 import h5py
 import numpy as np
 from tracks import *
-from ReportBuilder import html_summary, html_comparison, makeimage, npy_builder, hd5_dump
+from ReportBuilder import makeimage, npy_builder, hd5_dump
+from AnGUI import analysisGUI
+
+
 
 
 # Class that inherits root window class from tk
@@ -33,8 +36,6 @@ class loadNPY(tk.Tk):
         self.TrackObjects = []
         self.filenames = []
 
-        self.makeimagesvar = tk.IntVar()
-
         self.init_input()
         self.init_output()
 
@@ -48,9 +49,6 @@ class loadNPY(tk.Tk):
         ANALYZE_button = tk.Button(master=frame_input, text="Analyze .npy files", command=self.analyze)
         ANALYZE_button.pack(fill='x', expand=True)
 
-        IMAGES_tick = tk.Checkbutton(master=frame_input, text="Make Images", variable=self.makeimagesvar, onvalue=1, offvalue=0)
-        IMAGES_tick.pack(anchor='w')
-
     def init_output(self):
         frame_output = tk.Frame(self)
         frame_output.pack(fill='both', expand=True, side='right')
@@ -61,50 +59,54 @@ class loadNPY(tk.Tk):
     def loadnpy(self):
 
         npy = tk.filedialog.askopenfilename(initialdir="C:", title="Select .npy file to load")
-        if not npy[-3:] == "npy":
+
+        while not npy[-3:] == "npy":
             tk.messagebox.showerror(title="NPY", message="File extension must be .npy")
-        else:
-            self.numberofnpy.set(self.numberofnpy.get() + 1)
-            self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
-            objs = np.load(npy, allow_pickle=True)
-            if isinstance(objs[0], Track):
-                newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
-                self.TrackObjects.append(newObjects)
-            else:
-                newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse) for t in objs]
-                self.TrackObjects.append(newObjects)
-            self.filenames.append(npy)
+            npy = tk.filedialog.askopenfilename(initialdir="C:", title="Select .npy file to load")
+
+        self.numberofnpy.set(self.numberofnpy.get() + 1)
+        self.LabelText.set(f"{self.numberofnpy.get()} files loaded")
+        self.filenames.append(npy)
+
+        old_objs = np.load(npy, allow_pickle=True)
+
+        newobjs = []
+        for idx, t in enumerate(old_objs):
+            newobjs.append(TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse))
+            if hasattr(t, 'bruteforce_velo'):
+                newobjs[-1].bruteforce_velo = t.bruteforce_velo
+                newobjs[-1].bruteforce_phi = t.bruteforce_phi
+
+            if hasattr(t, 'muggeo_velo'):
+                newobjs[-1].muggeo_velo = t.muggeo_velo
+                newobjs[-1].muggeo_phi = t.muggeo_phi
+                newobjs[-1].muggeo_params = t.muggeo_params
+
+            if hasattr(t, 'manual_velo'):
+                newobjs[-1].manual_velo = t.manual_velo
+                try:
+                    newobjs[-1].manual_phi = t.manual_phi
+                except AttributeError: # For legacy purposes
+                    newobjs[-1].manual_phi = t.manual_sections
+
+        self.TrackObjects.append(newobjs)
 
     def analyze(self):
 
         if not self.numberofnpy.get():
             tk.messagebox.showerror(title="NPY", message="No file loaded!")
-        else:
-            savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-            savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
-            os.makedirs(savepath, exist_ok=True)
 
         if self.numberofnpy.get() == 1:
-            manual = True if self.TrackObjects[0][0].manual_velo else False
-            html_summary(self.TrackObjects[0], [], savepath, manual)
-            if self.makeimagesvar:
-                makeimage(self.TrackObjects[0], savepath, manual)
-            npy_builder(self.TrackObjects[0], None, savepath)
-            hd5_dump(self.TrackObjects[0], [], savepath)
             self.destroy()
-            exit()
+            analysisapp = analysisGUI(self.TrackObjects[0], [], self.filenames[-1].split('/')[-1][:-4])
+            analysisapp.mainloop()
         else:
             all_arr = np.array([])
             for obj in self.TrackObjects:
                 all_arr = np.append(all_arr, obj)
-            manual = True if all_arr[0].manual_velo else False
-            html_summary(all_arr, [], savepath, manual)
-            if self.makeimagesvar:
-                makeimage(all_arr, savepath, manual)
-            npy_builder(all_arr, None, savepath)
-            hd5_dump(all_arr, [], savepath)
             self.destroy()
-            exit()
+            analysisapp = analysisGUI(self.FinalTracks, [])
+            analysisapp.mainloop()
 
 
 class loadHD5(tk.Tk):
@@ -122,7 +124,7 @@ class loadHD5(tk.Tk):
         self.TrackObjects = []
         self.filenames = []
 
-        self.makeimagesvar = tk.IntVar()
+        self.previousvar = tk.IntVar()
 
         self.init_input()
         self.init_output()
@@ -137,8 +139,9 @@ class loadHD5(tk.Tk):
         ANALYZE_button = tk.Button(master=frame_input, text="Analyze .h5 files", command=self.analyze)
         ANALYZE_button.pack(fill='x', expand=True)
 
-        IMAGES_tick = tk.Checkbutton(master=frame_input, text="Make Images", variable=self.makeimagesvar, onvalue=1, offvalue=0)
-        IMAGES_tick.pack(anchor='w')
+        PREVIOUSDATA_tick = tk.Checkbutton(master=frame_input, text="Is there previous data?",
+                                           variable=self.previousvar, onvalue=1, offvalue=0)
+        PREVIOUSDATA_tick.pack(anchor='w')
 
     def init_output(self):
         frame_output = tk.Frame(self)
@@ -167,28 +170,25 @@ class loadHD5(tk.Tk):
                 ellipse = json.loads(tracks[key].get('ellipse').asstr()[()])
                 name = tracks[key].get('name').asstr()[()]
                 manual_sections = tracks[key].get('manual_sections')[:]
-                self.TrackObjects.append(TrackV2(image, x, y, samplerate, name, ellipse))
-                self.TrackObjects[-1].manual_sections = manual_sections
+
+                if self.previousvar.get() == 1:
+                    mvelo = np.array(tracks[key].get('minmax_velo')[:], dtype=int)
+                    msection = np.array(tracks[key].get('minmax_sections')[:], dtype=int)
+
+                    self.TrackObjects.append(TrackV2(image, x, y, samplerate, name, ellipse, (mvelo, msection)))
+                    self.TrackObjects[-1].manual_sections = manual_sections
+                else:
+                    self.TrackObjects.append(TrackV2(image, x, y, samplerate, name, ellipse))
+                    self.TrackObjects[-1].manual_sections = manual_sections
 
     def analyze(self):
-
         if not self.numberofh5.get():
             tk.messagebox.showerror(title="h5", message="No file loaded!")
-        else:
-            savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-            savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
-            os.makedirs(savepath, exist_ok=True)
+            return 0
 
-        manual = True if self.TrackObjects[0].manual_velo else False
-        html_summary(self.TrackObjects, [], savepath, manual)
-        if self.makeimagesvar:
-            makeimage(self.TrackObjects, savepath, manual)
-        npy_builder(self.TrackObjects, None, savepath)
-        hd5_dump(self.TrackObjects, [], savepath)
         self.destroy()
-        exit()
-
-
+        analysisapp = analysisGUI(self.TrackObjects, [])
+        analysisapp.mainloop()
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ from datetime import date
 
 
 from tracks import *
-from ReportBuilder import html_summary, makeimage, npy_builder, hd5_dump
+from ReportBuilder import npy_builder, hd5_dump, csv_dump
 
 
 # Class that inherits root window class from tk
@@ -29,43 +29,44 @@ class batchNPY(tk.Tk):
 
 
     def load(self, npy):
-        objs = np.load(npy, allow_pickle=True)
-        if isinstance(objs[0], Track):
-            newObjects = [TrackV2(t.image, t.xtrack, t.ytrack, t.samplerate, t.designator, t.ellipse) for t in objs]
-            self.TrackObjects.append(newObjects)
-        else:
-            newObjects = [TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse) for t in objs]
-            self.TrackObjects.append(newObjects)
+        old_objs = np.load(f, allow_pickle=True)
+        newobjs = []
+        for idx, t in enumerate(old_objs):
+            newobjs.append(TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse))
+            if hasattr(t, 'bruteforce_velo'):
+                newobjs[-1].bruteforce_velo = t.bruteforce_velo
+                newobjs[-1].bruteforce_phi = t.bruteforce_phi
 
+            if hasattr(t, 'muggeo_velo'):
+                newobjs[-1].muggeo_velo = t.muggeo_velo
+                newobjs[-1].muggeo_phi = t.muggeo_phi
+                newobjs[-1].muggeo_params = t.muggeo_params
+
+            if hasattr(t, 'manual_velo'):
+                newobjs[-1].manual_velo = t.manual_velo
+                newobjs[-1].manual_phi = t.manual_phi
+
+        return self.TrackObjects.append(np.array(newobjs))
 
     def analyze(self):
 
         savepath = tk.filedialog.askdirectory(initialdir="C:", title="Please select where to save the data")
-        savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_reanalysis")
+        savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_batch")
         os.makedirs(savepath, exist_ok=True)
 
-        if self.numberofnpy.get() == 1:
-            manual = True if self.TrackObjects[0][0].manual_velo else False
-            html_summary(self.TrackObjects[0], [], savepath, manual)
-            npy_builder(self.TrackObjects[0], None, savepath)
-            # TODO add csv
-            hd5_dump(self.TrackObjects[0], [], savepath)
-            self.destroy()
-            exit()
-        else:
-            all_arr = np.array([]) # TODO check if this for loop works for both branches
-            for obj in self.TrackObjects:
-                all_arr = np.append(all_arr, obj)
-            manual = True if all_arr[0].manual_velo else False
-            html_summary(all_arr, [], savepath, manual)
-            npy_builder(all_arr, None, savepath)
-            hd5_dump(all_arr, [], savepath)
-            # TODO add csv
-            self.destroy()
-            exit()
+        all_arr = np.array([]) # TODO check if this for loop works for both branches
+        for obj in self.TrackObjects:
+            all_arr = np.append(all_arr, obj)
+        manual = True if all_arr[0].manual_velo else False
+        npy_builder(all_arr, [], savepath)
+        hd5_dump(all_arr, [], savepath)
+        csv_dump(all_arr, None, savepath)
+        self.destroy()
+        exit()
 
 # Class that inherits root window class from tk
 class batchHD5(tk.Tk):
 
     def __init__(self):
         super().__init__()  # init of tk.Tk
+        # TODO build batch hd5's

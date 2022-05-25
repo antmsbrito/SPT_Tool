@@ -29,6 +29,7 @@ class ellipseGUI(tk.Tk):
         # List of track related objects
         self.TrackList = []
         self.NumberOfImages = tk.IntVar()
+        self.FinalTracks = []
 
         # Text for number of tracks loaded and respective track name
         self.LabelText = tk.StringVar()
@@ -84,10 +85,9 @@ class ellipseGUI(tk.Tk):
 
         self.FinalTracks = drawing_window.track_classes
         self.destroy()
-        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects)
+        analysisapp = analysisGUI(self.FinalTracks, drawing_window.rejects, "DataDump")
         analysisapp.mainloop()
 
 
 if __name__ == '__main__':
-    app = ellipseGUI()
-    app.mainloop()
+    pass
