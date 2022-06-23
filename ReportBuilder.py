@@ -193,6 +193,7 @@ def csv_dump(tracklist, savepath):
     manualvelolist = [np.average(tr.manual_velo) for tr in tracklist]
     manualseclist = [len(tr.manual_phi) for tr in tracklist]
     brutevelolist = [np.average(tr.bruteforce_velo) for tr in tracklist]
+    brutevelo_perlist = [tr.bruteforce_velo for tr in tracklist]
     bruteseclist = [len(tr.bruteforce_phi) for tr in tracklist]
     mugvelolist = [np.average(tr.muggeo_velo) for tr in tracklist]
     mugseclist = [len(tr.muggeo_phi) for tr in tracklist]
@@ -219,6 +220,7 @@ def csv_dump(tracklist, savepath):
          'Displacement velocity (nm/s)': dispvelolist,
          'Manual Velocity (nm/s)': manualvelolist, 'Manual Sections': manualseclist,
          'Bruteforce Velocity (nm/s)': brutevelolist, 'Bruteforce Sections': bruteseclist,
+         'Bruteforce Velocity PER section (nm/s)':brutevelo_perlist,
          'Muggeo et al Velocity (nm/s):': mugvelolist, 'Muggeo et al Sections:': mugseclist,
          'Distance travelled in X (nm)': distancelist_X, 'Distance travelled in Y (nm)': distancelist_Y,
          'Distance travelled in Z (nm)': distancelist_Z,
