@@ -115,3 +115,4 @@ dmypy.json
 .pyre/
 
 SPT_19_08_2021.html
+*.npy

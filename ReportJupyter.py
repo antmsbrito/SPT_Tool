@@ -4,9 +4,10 @@ from tkinter import Tk
 from tkinter import filedialog
 
 import pandas as pd
-from ipywidgets import Dropdown, interactive, fixed, Accordion, IntSlider, SelectMultiple, BoundedIntText, Button, Output
+from ipywidgets import Dropdown, interactive, fixed, Accordion, IntSlider, SelectMultiple, BoundedIntText, Button, Output, IntRangeSlider
 from IPython.display import display
 from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
 import seaborn as sns
 
 from tracks import *
@@ -65,44 +66,63 @@ def showStats(tr):
     
     return 0 
 
-def Update_Graphs(angle_threshold, all_tracks, angles):
-    print(
-        f"Less than {angle_threshold} deg means that minor axis <= {max(0, np.cos(np.deg2rad(angle_threshold))) * 100:.0f}% of major ")
+def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     
-    lowangle_tracks = all_tracks[angles <= angle_threshold]
+    all_angles = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in all_tracks]))
+    all_diameter = np.array([i.ellipse['major']*1000 for i in all_tracks])
+    
+    filtered_tracks = []
+    for idx,tr in enumerate(all_tracks):
+        if (all_angles[idx]<angle_threshold[1] and all_angles[idx]>angle_threshold[0]) and (all_diameter[idx]<major_threshold[1] and all_diameter[idx]>major_threshold[0]):
+            filtered_tracks.append(tr)
+    filtered_tracks = np.array(filtered_tracks)
     
     print(
-        f"n = {len(lowangle_tracks)} (out of {len(all_tracks)} ({(len(lowangle_tracks) / len(all_tracks)) * 100:.1f}%))\n\n")
+        f"n = {len(filtered_tracks)} (out of {len(all_tracks)} ({(len(filtered_tracks) / len(all_tracks)) * 100:.1f}%))\n\n")
 
-    displacement_velo = [np.average(tr.disp_velo) for tr in lowangle_tracks] 
-    brute_velo = [tr.bruteforce_velo for tr in lowangle_tracks]
-    brute_sections = [len(tr.bruteforce_phi) for tr in lowangle_tracks]
-    mug_velo = [tr.muggeo_velo for tr in lowangle_tracks]
-    mug_sections = [len(tr.muggeo_phi) for tr in lowangle_tracks]
+    angles = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in filtered_tracks]))
+    diameter = np.array([i.ellipse['major']*1000 for i in filtered_tracks])
     
+    displacement_velo = [np.average(tr.disp_velo) for tr in filtered_tracks]
+    brute_velo = [tr.bruteforce_velo for tr in filtered_tracks]
+    brute_sections = [len(tr.bruteforce_phi) for tr in filtered_tracks]
+    mug_velo = [tr.muggeo_velo for tr in filtered_tracks]
+    mug_sections = [len(tr.muggeo_phi) for tr in filtered_tracks]
     
-    print(f"Displacement: {np.average(displacement_velo):.2f} +- {np.std(displacement_velo):.2f} nm/s \n")
+    print(f"Displacement: {np.nanmean(displacement_velo):.2f} +- {np.nanstd(displacement_velo):.2f} nm/s \n")
     print(f"Brute force sectioning: {np.average(np.hstack(brute_velo)):.2f} +- {np.std(np.hstack(brute_velo)):.2f} nm/s")
     print(f"\t Average number of sections of {np.average(brute_sections):.2f} \n")
     print(f"Muggeo et al sectioning: {np.nanmean(np.hstack(mug_velo)):.2f} +- {np.nanstd(np.hstack(mug_velo)):.2f} nm/s")
     print(f"\t Average number of sections of {np.nanmean(mug_sections):.2f} \n")
 
-    lowangles = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in lowangle_tracks]))
     
-    plt.figure()
-    plt.hist(displacement_velo, label="Displacement", alpha=0.5, density=True)
-    plt.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True)
-    plt.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True)
-    plt.ylabel("PDF")
-    plt.xlabel("Velocity (nm/s)")
-    plt.legend()
+    fig = plt.figure()
+    gs = GridSpec(2,1, figure=fig, heigth_ratios=(1), width_ratios=(1,1))
+    
+    ax1 = fig.add_subplot(gs[2,0], adjustable='datalim', aspect='equal')
+    ax1.hist(displacement_velo, label="Displacement", alpha=0.5, density=True)
+    ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True)
+    ax1.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True)
+    ax1.set_ylabel("PDF")
+    ax1.set_xlabel("Velocity (nm/s)")
+    ax1.legend()
+    
+    ax2 = fig.add_subplot(gs[1,0], adjustable='datalim', aspect='equal')
+    ax2.hist(displacement_velo, label="Displacement", alpha=0.5, density=True)
+    ax2.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True)
+    ax2.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True)
+    ax2.set_ylabel("PDF")
+    ax2.set_xlabel("Velocity (nm/s)")
+    ax2.set_xscale('log')
+    ax2.legend()
+    
     plt.tight_layout()
     plt.show()
     
     plt.subplots()
-    plt.scatter(x=lowangles, y=displacement_velo, label="Displacement")
-    plt.scatter(x=lowangles, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=lowangles, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    plt.scatter(x=angles, y=displacement_velo, label="Displacement")
+    plt.scatter(x=angles, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    plt.scatter(x=angles, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
     plt.ylabel("Average Velocity (nm/s)")
     plt.xlabel("Angle (deg)")
     plt.legend()
@@ -110,28 +130,17 @@ def Update_Graphs(angle_threshold, all_tracks, angles):
     plt.show()
     
     plt.figure()
-    plt.scatter(x=lowangles, y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=lowangles, y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    plt.scatter(x=angles, y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    plt.scatter(x=angles, y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
     plt.ylabel("Standard deviation (nm/s)")
     plt.xlabel("Angle (deg)")
     plt.legend()
     plt.tight_layout()
     plt.show()
-
+    
     plt.figure()
-    major_axis = [tr.ellipse['major']*1000 for tr in lowangle_tracks]
-    plt.scatter(x=major_axis, y=displacement_velo, label="Displacement")
-    plt.scatter(x=major_axis, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=major_axis, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Average Velocity (nm/s)")
-    plt.xlabel("Length of major axis (nm))")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-    plt.figure()
-    plt.scatter(x=lowangles, y=brute_sections, label="Brute force", c='k', marker='*')
-    plt.scatter(x=lowangles, y=mug_sections, label="Muggeo et al", c='r', marker='+')
+    plt.scatter(x=angles, y=brute_sections, label="Brute force", c='k', marker='*')
+    plt.scatter(x=angles, y=mug_sections, label="Muggeo et al", c='r', marker='+')
     plt.ylabel("Number of sections")
     plt.xlabel("Angle (deg)")
     plt.legend()
@@ -139,10 +148,29 @@ def Update_Graphs(angle_threshold, all_tracks, angles):
     plt.show()
 
     plt.figure()
-    plt.scatter(x=[len(tr.unwrapped) for tr in lowangle_tracks], y=displacement_velo, label="Displacement")
-    plt.scatter(x=[len(tr.unwrapped) for tr in lowangle_tracks], y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=[len(tr.unwrapped) for tr in lowangle_tracks], y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.xlabel("Length of track")
+    plt.scatter(x=diameter, y=displacement_velo, label="Displacement")
+    plt.scatter(x=diameter, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    plt.scatter(x=diameter, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    plt.ylabel("Average Velocity (nm/s)")
+    plt.xlabel("Diameter (nm))")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure()
+    plt.scatter(x=diameter, y=brute_sections, label="Brute force", c='k', marker='*')
+    plt.scatter(x=diameter, y=mug_sections, label="Muggeo et al", c='r', marker='+')
+    plt.ylabel("Number of sections")
+    plt.xlabel("Diameter (nm)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure()
+    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=displacement_velo, label="Displacement")
+    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    plt.xlabel("Length of track (#)")
     plt.ylabel("Velocity (nm/s)")
     plt.legend()
     plt.tight_layout()
@@ -211,17 +239,17 @@ def ViolinComparison(conditions, root, anglethresh):
         print(f"Saving velocities...")
         databrute['Velocity (nm/s)'] = np.hstack([np.hstack(brute_ftsw), np.hstack(brute_divib)])
         databrute['Condition'] = [conditionname] * len(databrute['Velocity (nm/s)'])
-        databrute['Protein'] = ['ftsW'] * len(np.hstack(brute_ftsw)) + ['divIB'] * len(np.hstack(brute_divib))
+        databrute['Protein'] = ['FtsW'] * len(np.hstack(brute_ftsw)) + ['DivIB'] * len(np.hstack(brute_divib))
         final_brute = pd.concat([final_brute, pd.DataFrame(data=databrute)])
 
         datamug['Velocity (nm/s)'] = np.hstack([np.hstack(mug_ftsw), np.hstack(mug_divib)])
         datamug['Condition'] = [conditionname] * len(datamug['Velocity (nm/s)'])
-        datamug['Protein'] = ['ftsW'] * len(np.hstack(mug_ftsw)) + ['divIB'] * len(np.hstack(mug_divib))
+        datamug['Protein'] = ['FtsW'] * len(np.hstack(mug_ftsw)) + ['DivIB'] * len(np.hstack(mug_divib))
         final_mug = pd.concat([final_mug, pd.DataFrame(datamug)])
 
         datadisp['Velocity (nm/s)'] = np.hstack([np.hstack(disp_ftsw), np.hstack(disp_divib)])
         datadisp['Condition'] = [conditionname] * len(datadisp['Velocity (nm/s)'])
-        datadisp['Protein'] = ['ftsW'] * len(np.hstack(disp_ftsw)) + ['divIB'] * len(np.hstack(disp_divib))
+        datadisp['Protein'] = ['FtsW'] * len(np.hstack(disp_ftsw)) + ['DivIB'] * len(np.hstack(disp_divib))
         final_disp = pd.concat([final_disp, pd.DataFrame(datadisp)])
         
     print("Done!")

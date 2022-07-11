@@ -9,6 +9,8 @@ import xml.etree.ElementTree as ET
 
 from Analysis import *
 
+from matplotlib import pyplot as plt
+
 
 class TrackV2:
 
@@ -155,21 +157,25 @@ class TrackV2:
         return perimeter
 
     def calculatez(self):
-        radius = self._ellipse['major'] / 2
-
+        
+        major = self._ellipse['major']
+        ang = np.deg2rad(self._ellipse['angle'])
         zcoord = []
-        counter = 1
-        for idx, pair in enumerate(self.xy_ellipse):
-            xdistancevector = pair[0] - self._ellipse['x0']
-            ydistancevector = pair[1] - self._ellipse['y0']
-            distance = np.linalg.norm([xdistancevector, ydistancevector])
-            sqrarg = radius ** 2 - distance ** 2
-            if sqrarg < 0:
-                sqrarg = 0
-                counter = -1
-            temporaryZ = np.array(np.sqrt(sqrarg))
-            zcoord.append(temporaryZ * counter)
 
+        for idx, pair in enumerate(self.xy_ellipse):
+            distance = np.linalg.norm(np.array(pair)-np.array([self._ellipse['x0'],self._ellipse['y0']]))
+            sqrarg = (major/2) ** 2 - distance ** 2
+            temporaryZ = np.sqrt(sqrarg)
+            
+            # Be careful with sign of the Z coordinate! 
+            # In a referential centered at the ellipse with major axis colinear to xaxis
+            pair_c = pair - np.array([self._ellipse['x0'],self._ellipse['y0']])
+            pair_c_r = self.rot2d(-1 * ang).dot(pair_c)
+
+            Zsign = np.sign(pair_c_r[1])
+            
+            zcoord.append(temporaryZ * Zsign)
+        
         return np.array(zcoord)
 
     @staticmethod
