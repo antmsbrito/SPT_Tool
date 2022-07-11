@@ -10,7 +10,40 @@ from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 import seaborn as sns
 
+from scipy.optimize import minimize 
+
 from tracks import *
+
+
+def gaussian(v, mu, sigma):
+    return (1/(sigma*np.sqrt(2*np.pi))) * np.exp(-0.5*((v-mu)/sigma)**2)
+
+def twogaussian(v, p1, mu1, sig1, mu2, sig2):
+    return gaussian(v, mu1, sig1)*p1 + gaussian(v, mu2, sig2)*(1-p1)
+
+def lognormal(v, mu, sigma):
+    return (1/(v*sigma*np.sqrt(2*np.pi))) * np.exp(-(np.log(v)-mu)**2/(2*sigma**2))
+
+def twolognormal(v, p1, mu1, sig1, mu2, sig2):
+    return lognormal(v, mu1, sig1)*p1 + lognormal(v, mu2, sig2)*(1-p1)
+
+def residues(x, *args):
+    
+    x_data = args[0]
+    y_data = args[1]
+    func = args[2]
+    
+    return np.sum((y_data - func(x_data, *x))**2)
+    
+
+def build_bin_centers(bins):
+    centerbins = []
+    for idx, bini in enumerate(bins):
+        if bini == bins[-1]:
+            continue
+        else:
+            centerbins.append((bins[idx + 1] + bins[idx]) / 2)
+    return np.array(centerbins)
 
 
 def FileLoader(folder, root):
@@ -104,7 +137,7 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     
     ax1 = fig.add_subplot(gs[0,0])
     ax1.hist(displacement_velo, label="Displacement", alpha=0.5, density=True, bins='auto')
-    ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True, bins='auto')
+    pdf, bins, _ = ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True, bins='auto')
     ax1.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True, bins='auto')
     ax1.set_ylabel("Probability Density Function")
     ax1.set_xlabel("Velocity (nm/s)")
@@ -122,6 +155,72 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     plt.tight_layout()
     plt.show()
     ##############################################################################################################################################
+    
+    # FITTING ON BRUTE_FORCE
+    cbins = build_bin_centers(bins)
+    
+    # ONE GAUSSIAN FITTING
+    one_g = minimize(fun=residues, x0=[10,1], args=(cbins, pdf, gaussian), bounds=((0, np.inf), (0, np.inf)))
+    # TWO GAUSSIAN FITTING
+    two_g = minimize(fun=residues, x0=[0.5,10,1,1,1], args=(cbins, pdf, twogaussian), bounds=((0, 1),(0, np.inf),(0, np.inf),(0, np.inf),(0, np.inf)))
+    # ONE LOG-NORMAL FITTING
+    one_lg = minimize(fun=residues, x0=[1,0.5], args=(cbins, pdf, lognormal), bounds=((-np.inf, np.inf), (1e-5, np.inf)))
+    # TWO LOG-NORMAL FITTING
+    two_lg = minimize(fun=residues, x0=[0.5,1,0.5,2,0.5], args=(cbins, pdf, twolognormal), bounds=((0, 1),(-np.inf, np.inf),(1e-5, np.inf),(-np.inf, np.inf),(1e-5, np.inf)))
+    
+    fig = plt.figure("Fitted Velocity Distributions", figsize=(10,10))
+    gs = GridSpec(2,2, figure=fig, width_ratios=(1,1), height_ratios=(1,0.2))
+    
+    fig.suptitle(f"Angle={angle_threshold}º, Diameter={major_threshold} nm ")
+    
+    ax1 = fig.add_subplot(gs[0,0])
+    ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.1, density=True, bins='auto', color='k')
+    ax1.plot(cbins, pdf, '--k')
+    ax1.plot(cbins, gaussian(cbins,*one_g.x), label='Unimodal Normal')
+    ax1.plot(cbins, twogaussian(cbins, *two_g.x), label='Bimodal Normal')
+    ax1.set_ylabel("Probability Density Function")
+    ax1.set_xlabel("Velocity (nm/s)")
+    ax1.set_title("Gaussians")
+    ax1.legend()
+    
+    ax2 = fig.add_subplot(gs[0,1])
+    ax2.hist(np.hstack(brute_velo), label="Brute force", alpha=0.1, density=True, bins='auto', color='k')
+    ax2.plot(cbins, pdf, '--k')
+    ax2.plot(cbins, lognormal(cbins,*one_lg.x), label='Unimodal LogNormal')
+    ax2.plot(cbins, twolognormal(cbins, *two_lg.x), label='Bimodal LogNormal')
+    ax2.set_ylabel("Probability Density Function")
+    ax2.set_xlabel("Velocity (nm/s)")
+    ax2.set_title("Log-Normals")
+    ax2.legend()
+    
+    ax3 = fig.add_subplot(gs[1,0])
+    onegstr = f"One Gaussian: $\mu$={one_g.x[0]:.2f}, $\sigma=${one_g.x[1]:.2f}, SSE={residues(one_g.x,cbins,pdf,gaussian):.2e}"
+    twogstr = f"Two Gaussian: {100*two_g.x[0]:.2f}% $\mu_1$={two_g.x[1]:.2f}, $\sigma_1$={two_g.x[2]:.2f} \n   {100-100*two_g.x[0]:.2f}% $\mu_2$={two_g.x[3]:.2f}, $\sigma_2$={two_g.x[4]:.2f} \n  SSE={residues(two_g.x,cbins,pdf,twogaussian):.2e}"
+    ax3.text(0.5,0.7, onegstr, size=12, ha="center", va="center", bbox=dict(boxstyle="round",ec='k',fc='tab:grey'), wrap=False)
+    ax3.text(0.5,0.3, twogstr, size=12, ha="center", va="center", bbox=dict(boxstyle="round",ec='k',fc='tab:grey'), wrap=False)
+    ax3.axis('off')
+    
+    ax4=fig.add_subplot(gs[1,1])
+    onelgstr = f"One LogNormal: $\mu$={one_lg.x[0]:.2f}, $\sigma=${one_lg.x[1]:.2f}, SSE={residues(one_lg.x,cbins,pdf,lognormal):.2e}"
+    twolgstr = f"Two LogNormal: {100*two_lg.x[0]:.2f}% $\mu_1$={two_lg.x[1]:.2f}, $\sigma_1$={two_lg.x[2]:.2f} \n    {100-100*two_lg.x[0]:.2f}% $\mu_2$={two_lg.x[3]:.2f}, $\sigma_2$={two_lg.x[4]:.2f} \n  SSE={residues(two_lg.x,cbins,pdf,twolognormal):.2e}"
+    ax4.text(0.5,0.7, onelgstr, size=12, ha="center", va="center", bbox=dict(boxstyle="round",ec='k',fc='tab:grey'), wrap=False)
+    ax4.text(0.5,0.3, twolgstr, size=12, ha="center", va="center", bbox=dict(boxstyle="round",ec='k',fc='tab:grey'), wrap=False)
+    ax4.axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    print(f"One Gaussian: mu={one_g.x[0]:.2f}, sigma={one_g.x[1]:.2f}, SSE={residues(one_g.x,cbins,pdf,gaussian):.2e}")
+    print(f"Two Gaussian: {100*two_g.x[0]:.2f}% mu={two_g.x[1]:.2f}, sigma={two_g.x[2]:.2f} \n",
+     f"             {100-100*two_g.x[0]:.2f}% mu={two_g.x[3]:.2f}, sigma={two_g.x[4]:.2f} \n", 
+     f"             SSE={residues(two_g.x,cbins,pdf,twogaussian):.2e}")
+    
+    print(f"One LogNormal: mu={one_lg.x[0]:.2f}, sigma={one_lg.x[1]:.2f}, SSE={residues(one_lg.x,cbins,pdf,lognormal):.2e}")
+    print(f"Two LogNormal: {100*two_lg.x[0]:.2f}% mu={two_lg.x[1]:.2f}, sigma={two_lg.x[2]:.2f} \n",
+     f"              {100-100*two_lg.x[0]:.2f}% mu={two_lg.x[3]:.2f}, sigma={two_lg.x[4]:.2f} \n",
+     f"              SSE={residues(two_lg.x,cbins,pdf,twolognormal):.2e}")
+    
+    
     
     ##############################################################################################################################################
     fig2 = plt.figure("Effect of angle", figsize=(10,10))
