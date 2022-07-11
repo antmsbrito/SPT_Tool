@@ -68,6 +68,8 @@ def showStats(tr):
 
 def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     
+    plt.close('all')
+    
     all_angles = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in all_tracks]))
     all_diameter = np.array([i.ellipse['major']*1000 for i in all_tracks])
     
@@ -96,85 +98,120 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     print(f"\t Average number of sections of {np.nanmean(mug_sections):.2f} \n")
 
     
-    fig = plt.figure()
-    gs = GridSpec(2,1, figure=fig, heigth_ratios=(1), width_ratios=(1,1))
+    ##############################################################################################################################################
+    fig = plt.figure("Velocity Distributions", figsize=(10,5))
+    gs = GridSpec(1,2, figure=fig, width_ratios=(1,1))
     
-    ax1 = fig.add_subplot(gs[2,0], adjustable='datalim', aspect='equal')
-    ax1.hist(displacement_velo, label="Displacement", alpha=0.5, density=True)
-    ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True)
-    ax1.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True)
-    ax1.set_ylabel("PDF")
+    ax1 = fig.add_subplot(gs[0,0])
+    ax1.hist(displacement_velo, label="Displacement", alpha=0.5, density=True, bins='auto')
+    ax1.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True, bins='auto')
+    ax1.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True, bins='auto')
+    ax1.set_ylabel("Probability Density Function")
     ax1.set_xlabel("Velocity (nm/s)")
     ax1.legend()
     
-    ax2 = fig.add_subplot(gs[1,0], adjustable='datalim', aspect='equal')
-    ax2.hist(displacement_velo, label="Displacement", alpha=0.5, density=True)
-    ax2.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True)
-    ax2.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True)
-    ax2.set_ylabel("PDF")
+    ax2 = fig.add_subplot(gs[0,1])
+    ax2.hist(displacement_velo, label="Displacement", alpha=0.5, density=True, bins='auto')
+    ax2.hist(np.hstack(brute_velo), label="Brute force", alpha=0.5, density=True, bins='auto')
+    ax2.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True, bins='auto')
+    ax2.set_ylabel("Probability Density Function")
     ax2.set_xlabel("Velocity (nm/s)")
     ax2.set_xscale('log')
     ax2.legend()
     
     plt.tight_layout()
     plt.show()
+    ##############################################################################################################################################
     
-    plt.subplots()
-    plt.scatter(x=angles, y=displacement_velo, label="Displacement")
-    plt.scatter(x=angles, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=angles, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Average Velocity (nm/s)")
-    plt.xlabel("Angle (deg)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ##############################################################################################################################################
+    fig2 = plt.figure("Effect of angle", figsize=(10,10))
+    gs = GridSpec(2,2, figure=fig2, width_ratios=(1,1), height_ratios=(1,1))
     
-    plt.figure()
-    plt.scatter(x=angles, y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=angles, y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Standard deviation (nm/s)")
-    plt.xlabel("Angle (deg)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ax1 = fig2.add_subplot(gs[0,0])
+    ax1.scatter(x=angles, y=displacement_velo, label="Displacement")
+    ax1.scatter(x=angles, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax1.scatter(x=angles, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax1.set_ylabel("Average Velocity (nm/s)")
+    ax1.set_xlabel("Angle (deg)")
+    ax1.legend()
     
-    plt.figure()
-    plt.scatter(x=angles, y=brute_sections, label="Brute force", c='k', marker='*')
-    plt.scatter(x=angles, y=mug_sections, label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Number of sections")
-    plt.xlabel("Angle (deg)")
-    plt.legend()
+    ax2 = fig2.add_subplot(gs[0,1])
+    ax2.scatter(x=angles, y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax2.scatter(x=angles, y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax2.set_ylabel("Standard deviation (nm/s)")
+    ax2.set_xlabel("Angle (deg)")
+    ax2.legend()
+    
+    ax3 = fig2.add_subplot(gs[1,0])
+    ax3.scatter(x=angles, y=brute_sections, label="Brute force", c='k', marker='*')
+    ax3.scatter(x=angles, y=mug_sections, label="Muggeo et al", c='r', marker='+')
+    ax3.set_ylabel("Number of sections")
+    ax3.set_xlabel("Angle (deg)")
+    ax3.legend()
+    
     plt.tight_layout()
     plt.show()
+    ##############################################################################################################################################
+    
+    ##############################################################################################################################################
+    fig3 = plt.figure("Effect of diameter", figsize=(10,10))
+    gs = GridSpec(2,2, figure=fig3, width_ratios=(1,1), height_ratios=(1,1))
+    
+    ax1 = fig3.add_subplot(gs[0,0])
+    ax1.scatter(x=diameter, y=displacement_velo, label="Displacement")
+    ax1.scatter(x=diameter, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax1.scatter(x=diameter, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax1.set_ylabel("Average Velocity (nm/s)")
+    ax1.set_xlabel("Diameter (nm)")
+    ax1.legend()
+    
+    ax2 = fig3.add_subplot(gs[0,1])
+    ax2.scatter(x=diameter, y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax2.scatter(x=diameter, y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax2.set_ylabel("Standard deviation (nm/s)")
+    ax2.set_xlabel("Diameter (nm)")
+    ax2.legend()
+    
+    ax3 = fig3.add_subplot(gs[1,0])
+    ax3.scatter(x=diameter, y=brute_sections, label="Brute force", c='k', marker='*')
+    ax3.scatter(x=diameter, y=mug_sections, label="Muggeo et al", c='r', marker='+')
+    ax3.set_ylabel("Number of sections")
+    ax3.set_xlabel("Diameter (nm)")
+    ax3.legend()
+    
+    plt.tight_layout()
+    plt.show()
+    ##############################################################################################################################################
 
-    plt.figure()
-    plt.scatter(x=diameter, y=displacement_velo, label="Displacement")
-    plt.scatter(x=diameter, y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=diameter, y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Average Velocity (nm/s)")
-    plt.xlabel("Diameter (nm))")
-    plt.legend()
+    ##############################################################################################################################################
+    fig4 = plt.figure("Effect of track length", figsize=(10,10))
+    gs = GridSpec(2,2, figure=fig4, width_ratios=(1,1), height_ratios=(1,1))
+    
+    ax1 = fig4.add_subplot(gs[0,0])
+    ax1.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=displacement_velo, label="Displacement")
+    ax1.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax1.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax1.set_xlabel("Length of track (#)")
+    ax1.set_ylabel("Velocity (nm/s)")
+    ax1.legend()
+    
+    ax2 = fig4.add_subplot(gs[0,1])
+    ax2.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.std(i) for i in brute_velo], label="Brute force", c='k', marker='*')
+    ax2.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.std(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
+    ax2.set_xlabel("Length of track (#)")
+    ax2.set_ylabel("Standard deviation (nm/s)")
+    ax2.legend()
+    
+    ax3 = fig4.add_subplot(gs[1,0])
+    ax3.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=brute_sections, label="Brute force", c='k', marker='*')
+    ax3.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=mug_sections, label="Muggeo et al", c='r', marker='+')
+    ax3.set_xlabel("Length of track (#)")
+    ax3.set_ylabel("Number of sections")
+    ax3.legend()
+    
     plt.tight_layout()
     plt.show()
-
-    plt.figure()
-    plt.scatter(x=diameter, y=brute_sections, label="Brute force", c='k', marker='*')
-    plt.scatter(x=diameter, y=mug_sections, label="Muggeo et al", c='r', marker='+')
-    plt.ylabel("Number of sections")
-    plt.xlabel("Diameter (nm)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-    plt.figure()
-    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=displacement_velo, label="Displacement")
-    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in brute_velo], label="Brute force", c='k', marker='*')
-    plt.scatter(x=[len(tr.unwrapped) for tr in filtered_tracks], y=[np.average(i) for i in mug_velo], label="Muggeo et al", c='r', marker='+')
-    plt.xlabel("Length of track (#)")
-    plt.ylabel("Velocity (nm/s)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    ##############################################################################################################################################
     
 
 def ViolinComparison(conditions, root, anglethresh):
