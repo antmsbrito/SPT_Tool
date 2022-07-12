@@ -160,15 +160,15 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     cbins = build_bin_centers(bins)
     
     # ONE GAUSSIAN FITTING
-    one_g = minimize(fun=residues, x0=[10,1], args=(cbins, pdf, gaussian), bounds=((0, np.inf), (0, np.inf)))
+    one_g = minimize(fun=residues, x0=[10,4], args=(cbins, pdf, gaussian), bounds=((0, np.inf), (0, np.inf)))
     # TWO GAUSSIAN FITTING
-    two_g = minimize(fun=residues, x0=[0.5,10,1,1,1], args=(cbins, pdf, twogaussian), bounds=((0, 1),(0, np.inf),(0, np.inf),(0, np.inf),(0, np.inf)))
+    two_g = minimize(fun=residues, x0=[0.5,10,4,2,2], args=(cbins, pdf, twogaussian), bounds=((0, 1),(0, np.inf),(0, np.inf),(0, np.inf),(0, np.inf)))
     # ONE LOG-NORMAL FITTING
     one_lg = minimize(fun=residues, x0=[1,0.5], args=(cbins, pdf, lognormal), bounds=((-np.inf, np.inf), (1e-5, np.inf)))
     # TWO LOG-NORMAL FITTING
     two_lg = minimize(fun=residues, x0=[0.5,1,0.5,2,0.5], args=(cbins, pdf, twolognormal), bounds=((0, 1),(-np.inf, np.inf),(1e-5, np.inf),(-np.inf, np.inf),(1e-5, np.inf)))
     
-    fig = plt.figure("Fitted Velocity Distributions", figsize=(10,10))
+    fig = plt.figure("Fitted Velocity Distributions", figsize=(15,10))
     gs = GridSpec(2,2, figure=fig, width_ratios=(1,1), height_ratios=(1,0.2))
     
     fig.suptitle(f"Angle={angle_threshold}º, Diameter={major_threshold} nm ")
