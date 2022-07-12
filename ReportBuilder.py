@@ -108,8 +108,8 @@ def makeimage(tracklist, savepath, MANUALbool):
         ax1.add_patch(eli)
         ax1.set_xlabel("x coordinates (px)")
         ax1.set_ylabel("y coordinates (px)")
-        ax1.set_xlim((np.average(tr.x / 0.08) - 10, np.average(tr.x / 0.08) + 10))
-        ax1.set_ylim((np.average(tr.y / 0.08) - 10, np.average(tr.y / 0.08) + 10))
+        ax1.set_xlim((np.average(tr.x / 0.08) - 25, np.average(tr.x / 0.08) + 25))
+        ax1.set_ylim((np.average(tr.y / 0.08) - 25, np.average(tr.y / 0.08) + 25))
         ax1.set_aspect('equal')
         ax1.legend()
 
@@ -164,7 +164,7 @@ def makeimage(tracklist, savepath, MANUALbool):
                             f'Average distance to ellipse {np.mean(dist2eli):.2f} nm',
                             f'Total distance traveled {cumulative_disp[-1]:.2f} nm',
                             f'Total displacement {np.sqrt((xeli[-1] - xeli[0]) ** 2 + (yeli[-1] - yeli[0]) ** 2) * 0.08 * 1000:.2f} nm',
-                            f'Angle to imaging plane (deg) {np.rad2deg(np.arccos(tr.ellipse["minor"]/tr.ellipse["major"])):.2f} '))
+                            f'Angle to imaging plane (deg) {np.rad2deg(np.arccos(tr.ellipse["minor"] / tr.ellipse["major"])):.2f} '))
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax6.text(0, 0, rawtxt, fontsize=20, bbox=props)
         ax6.set_ylim((0, 0.4))
@@ -188,21 +188,47 @@ def csv_dump(tracklist, savepath):
     twodspeedlist = [tr.twodspeed * 1000 for tr in tracklist]
     msdalphalist = [tr.msd_alpha for tr in tracklist]
     anglelist = np.rad2deg(np.arccos([i.ellipse['minor'] / i.ellipse['major'] for i in tracklist]))
-    radiuslist = [i.ellipse['major']*1000 for i in tracklist]
+    radiuslist = [i.ellipse['major'] * 1000 for i in tracklist]
     dispvelolist = [np.average(tr.disp_velo) for tr in tracklist]
     manualvelolist = [np.average(tr.manual_velo) for tr in tracklist]
     manualseclist = [len(tr.manual_phi) for tr in tracklist]
     brutevelolist = [np.average(tr.bruteforce_velo) for tr in tracklist]
+    brutevelo_perlist = [tr.bruteforce_velo for tr in tracklist]
     bruteseclist = [len(tr.bruteforce_phi) for tr in tracklist]
     mugvelolist = [np.average(tr.muggeo_velo) for tr in tracklist]
     mugseclist = [len(tr.muggeo_phi) for tr in tracklist]
 
+    distancelist_X = [np.sum(np.diff(tr.x)) * 1000 for tr in tracklist]
+    distancelist_Y = [np.sum(np.diff(tr.y)) * 1000 for tr in tracklist]
+    distancelist_Z = [np.sum(np.diff(tr.z)) * 1000 for tr in tracklist]
+    distancelist_eX = [np.sum(np.diff(tr.xellipse)) * 1000 for tr in tracklist]
+    distancelist_eY = [np.sum(np.diff(tr.yellipse)) * 1000 for tr in tracklist]
+
+    distancelist_total2D = [np.sum(np.sqrt(np.diff(tr.x) ** 2 + np.diff(tr.y) ** 2)) * 1000 for tr in tracklist]
+    distancelist_total3D = [np.sum(np.sqrt(np.diff(tr.x) ** 2 + np.diff(tr.y) ** 2 + np.diff(tr.z) ** 2)) * 1000 for tr in
+                            tracklist]
+
+    displacementlist_2D = [np.linalg.norm([tr.x[-1] - tr.x[0], tr.y[-1] - tr.y[0], tr.z[-1] - tr.z[0]]) * 1000 for tr in
+                           tracklist]
+    displacementlist_3D = [np.linalg.norm([tr.x[-1] - tr.x[0], tr.y[-1] - tr.y[0], tr.z[-1] - tr.z[0]]) * 1000 for tr in
+                           tracklist]
+
+    ellipsedistlist = [np.mean(np.linalg.norm(tr.xypairs - tr.xy_ellipse, axis=1) * 1000) for tr in tracklist]
+
     d = {'Name/ID': namelist, 'Track Length': lengthlist, '2D velocity (nm/s)': twodspeedlist,
-         'MSD alpha': msdalphalist, 'Angle (deg)': anglelist, 'Radius (nm)': radiuslist,
+         'MSD alpha': msdalphalist, 'Angle (deg)': anglelist, 'Diameter (nm)': radiuslist,
          'Displacement velocity (nm/s)': dispvelolist,
          'Manual Velocity (nm/s)': manualvelolist, 'Manual Sections': manualseclist,
          'Bruteforce Velocity (nm/s)': brutevelolist, 'Bruteforce Sections': bruteseclist,
-         'Muggeo et al Velocity (nm/s):': mugvelolist, 'Muggeo et al Sections:': mugseclist}
+         'Bruteforce Velocity PER section (nm/s)':brutevelo_perlist,
+         'Muggeo et al Velocity (nm/s):': mugvelolist, 'Muggeo et al Sections:': mugseclist,
+         'Distance travelled in X (nm)': distancelist_X, 'Distance travelled in Y (nm)': distancelist_Y,
+         'Distance travelled in Z (nm)': distancelist_Z,
+         'Distance travelled in Xeli (nm)': distancelist_eX, 'Distance travelled in Yeli (nm)': distancelist_eY,
+         'Total distance travelled in 2D (nm)': distancelist_total2D,
+         'Total distance travelled in 3D (nm)': distancelist_total3D,
+         'Total displacement in 2D (nm)': displacementlist_2D, 'Total displacement in 3D (nm)': displacementlist_3D,
+         'Average distance to ellipse (nm)': ellipsedistlist}
 
     df = pd.DataFrame(data=d)
     df.to_excel(savepath + os.sep + "DataDump.xlsx", index=False, float_format="%.2f")
