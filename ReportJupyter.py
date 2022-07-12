@@ -141,6 +141,7 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     ax1.hist(np.hstack(mug_velo), label="Muggeo et al", alpha=0.5, density=True, bins='auto')
     ax1.set_ylabel("Probability Density Function")
     ax1.set_xlabel("Velocity (nm/s)")
+    ax1.set_xlim(0,50)
     ax1.legend()
     
     ax2 = fig.add_subplot(gs[0,1])
@@ -150,6 +151,7 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     ax2.set_ylabel("Probability Density Function")
     ax2.set_xlabel("Velocity (nm/s)")
     ax2.set_xscale('log')
+    ax2.set_xlim(0.01,50)
     ax2.legend()
     
     plt.tight_layout()
