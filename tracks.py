@@ -30,7 +30,20 @@ class TrackV2:
                 len(np.diff(self.y)) * self.samplerate)
         self.twodposition = np.array([np.sqrt(np.square(p[0]) + np.square(p[1])) for p in self.xypairs])
         self.msd = self.msd_calc(self.xypairs)
-        self.msd_alpha, _ = slope_and_mse(np.log10(np.arange(1, 20) * 3), np.log10(self.msd[1:20]))
+
+        if len(self.x) > 7:
+            try:
+                self.msd_alpha, o, r_value, p_value, std_err = linregress(np.log(np.arange(1, 20) * self.samplerate), np.log(self.msd[1:20]))
+            except ValueError:
+                self.msd_alpha, o, r_value, p_value, std_err = linregress(np.log(np.arange(1, len(self.msd)) * self.samplerate), np.log(self.msd[1:]))
+
+            # In pure brownian diffusion slope is 4D
+            self.d24 = np.exp(o) / 4
+            self.R = self.msd[1:] / (4 * self.d24 * np.linspace(1, len(self.msd) - 1, len(self.msd[1:])) * self.samplerate)
+        else:
+            self.msd_alpha = np.nan
+            self.d24 = np.nan
+            self.R = np.nan
 
         # Ellipse and 3D stats
         self._ellipse = ellipse
@@ -86,6 +99,33 @@ class TrackV2:
                 tempy.append(float(grandchildren.attrib['y']))  # list of y coords
             classlist.append(cls(image, tempx, tempy, srate, str(xmlfile).split('/')[-1][:-4] + f"_{counter}"))
             counter += 1
+        return classlist
+
+    @classmethod
+    def generator_simulator(cls, Ntrack, Nsim, diff=1):
+        """
+        Simulates Brownian motion trajectories through random walk
+        :param Ntrack: number of points in each track
+        :param Nsim: number of simulated tracks
+        :param diff: diffusion coefficient in um2/s
+        :return: list of TrackV2 classes
+        """
+
+        # To understand this remember that MSD is an estimator of total variance of the displacement distributions
+        # MSD = stdev_x**2 + stdev_y**2 = 4D
+        stdev = np.sqrt(2*diff)
+
+        classlist = np.empty(Nsim, dtype=object)
+        for sim in range(Nsim):
+            trX = np.zeros(Ntrack)
+            trY = np.zeros(Ntrack)
+
+            for t in range(Ntrack - 1):
+                trX[t + 1] = trX[t] + np.random.normal(0, stdev)
+                trY[t + 1] = trY[t] + np.random.normal(0, stdev)
+
+            classlist[sim] = cls(None, trX, trY, 1, str(sim))
+
         return classlist
 
     def update(self):
@@ -157,25 +197,25 @@ class TrackV2:
         return perimeter
 
     def calculatez(self):
-        
+
         major = self._ellipse['major']
         ang = np.deg2rad(self._ellipse['angle'])
         zcoord = []
 
         for idx, pair in enumerate(self.xy_ellipse):
-            distance = np.linalg.norm(np.array(pair)-np.array([self._ellipse['x0'],self._ellipse['y0']]))
-            sqrarg = (major/2) ** 2 - distance ** 2
+            distance = np.linalg.norm(np.array(pair) - np.array([self._ellipse['x0'], self._ellipse['y0']]))
+            sqrarg = (major / 2) ** 2 - distance ** 2
             temporaryZ = np.sqrt(sqrarg)
-            
+
             # Be careful with sign of the Z coordinate! 
             # In a referential centered at the ellipse with major axis colinear to xaxis
-            pair_c = pair - np.array([self._ellipse['x0'],self._ellipse['y0']])
+            pair_c = pair - np.array([self._ellipse['x0'], self._ellipse['y0']])
             pair_c_r = self.rot2d(-1 * ang).dot(pair_c)
 
             Zsign = np.sign(pair_c_r[1])
-            
+
             zcoord.append(temporaryZ * Zsign)
-        
+
         return np.array(zcoord)
 
     @staticmethod
@@ -240,4 +280,3 @@ class TrackV2:
     def rot2d(angle):
         s, c = np.sin(angle), np.cos(angle)
         return np.array([[c, -s], [s, c]])
-
