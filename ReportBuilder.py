@@ -205,7 +205,8 @@ def csv_dump(tracklist, savepath):
     distancelist_eY = [np.sum(np.diff(tr.yellipse)) * 1000 for tr in tracklist]
 
     distancelist_total2D = [np.sum(np.sqrt(np.diff(tr.x) ** 2 + np.diff(tr.y) ** 2)) * 1000 for tr in tracklist]
-    distancelist_total3D = [np.sum(np.sqrt(np.diff(tr.x) ** 2 + np.diff(tr.y) ** 2 + np.diff(tr.z) ** 2)) * 1000 for tr in
+    distancelist_total3D = [np.sum(np.sqrt(np.diff(tr.x) ** 2 + np.diff(tr.y) ** 2 + np.diff(tr.z) ** 2)) * 1000 for tr
+                            in
                             tracklist]
 
     displacementlist_2D = [np.linalg.norm([tr.x[-1] - tr.x[0], tr.y[-1] - tr.y[0], tr.z[-1] - tr.z[0]]) * 1000 for tr in
@@ -220,7 +221,7 @@ def csv_dump(tracklist, savepath):
          'Displacement velocity (nm/s)': dispvelolist,
          'Manual Velocity (nm/s)': manualvelolist, 'Manual Sections': manualseclist,
          'Bruteforce Velocity (nm/s)': brutevelolist, 'Bruteforce Sections': bruteseclist,
-         'Bruteforce Velocity PER section (nm/s)':brutevelo_perlist,
+         'Bruteforce Velocity PER section (nm/s)': brutevelo_perlist,
          'Muggeo et al Velocity (nm/s):': mugvelolist, 'Muggeo et al Sections:': mugseclist,
          'Distance travelled in X (nm)': distancelist_X, 'Distance travelled in Y (nm)': distancelist_Y,
          'Distance travelled in Z (nm)': distancelist_Z,
