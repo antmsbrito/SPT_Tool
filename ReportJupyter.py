@@ -183,6 +183,7 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     ax1.set_ylabel("Probability Density Function")
     ax1.set_xlabel("Velocity (nm/s)")
     ax1.set_title("Gaussians")
+    ax1.set_xlim((0,30))
     ax1.legend()
     
     ax2 = fig.add_subplot(gs[0,1])
@@ -193,6 +194,7 @@ def Update_Graphs(angle_threshold, major_threshold, all_tracks):
     ax2.set_ylabel("Probability Density Function")
     ax2.set_xlabel("Velocity (nm/s)")
     ax2.set_title("Log-Normals")
+    ax2.set_xlim((0,30))
     ax2.legend()
     
     ax3 = fig.add_subplot(gs[1,0])
@@ -401,3 +403,24 @@ def ViolinComparison(conditions, root, anglethresh):
     plt.show()
     
     return final_all
+
+
+def calc_kusumi(track):
+    N = len(track.x)
+    n = int(len(track.msd)-1)
+    
+    d24 = track.d24
+    
+    sims = TrackV2.generator_simulator(N, 500, d24)
+    
+    rs = np.array([s.R[n-1] for s in sims])
+    
+    upp = np.quantile(rs, 1-0.025)
+    low = np.quantile(rs, 0.025)
+    
+    if track.R[n-1]>upp:
+        return 'Directional'
+    elif track.R[n-1]<low:
+        return 'Confined'
+    else:
+        return 'Brownian'
