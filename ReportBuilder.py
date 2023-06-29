@@ -39,44 +39,6 @@ def npy_builder(tracklist, rejects, savepath):
     np.save(f"{savepath}\\RejectedTracks.npy", rejects)
     return
 
-
-def hd5_dump(tracklist, rejects, savepath):
-    print("wip")
-    return
-    hf = h5py.File(f'{savepath}\\DataDump.h5', 'w')
-
-    track_group = hf.create_group('tracks')
-    rejects_group = hf.create_group('rejects')
-
-    dt = h5py.special_dtype(vlen=str)
-
-    for idx, tr in enumerate(tracklist):
-        track_subfolder = hf.create_group(f'tracks/{tr.name}_{idx}')
-
-        track_subfolder.create_dataset('x', data=tr.x)  # np array
-        track_subfolder.create_dataset('y', data=tr.y)  # np array
-        track_subfolder.create_dataset('samplerate', data=np.array([tr.samplerate]))  # float
-        track_subfolder.create_dataset('image', data=np.array(tr.imageobject))  # np array
-        track_subfolder.create_dataset('name', data=tr.name, dtype=dt)  # string
-        track_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse), dtype=dt)  # string
-        track_subfolder.create_dataset('manual_sections', data=np.array(tr.manual_sections))  # np array
-        track_subfolder.create_dataset('minmax_sections', data=np.array(tr.minmax_sections))  # np array
-        track_subfolder.create_dataset('minmax_velo', data=np.array(tr.minmax_velo))  # np array
-
-    for idx, tr in enumerate(rejects):
-        rejects_subfolder = hf.create_group(f'rejects/{tr.name}_{idx}')
-        rejects_subfolder.create_dataset('x', data=tr.x)  # np array
-        rejects_subfolder.create_dataset('y', data=tr.y)  # np array
-        rejects_subfolder.create_dataset('samplerate', data=np.array([tr.samplerate]))  # float
-        rejects_subfolder.create_dataset('image', data=np.array(tr.imageobject))  # np array
-        rejects_subfolder.create_dataset('name', data=tr.name, dtype=dt)
-        rejects_subfolder.create_dataset('ellipse', data=json.dumps(tr.ellipse), dtype=dt)
-
-    hf.close()
-
-    return
-
-
 def makeimage(tracklist, savepath, MANUALbool):
     """Image of each track"""
     matplotlib.use('Agg')
