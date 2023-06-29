@@ -4,7 +4,7 @@ from datetime import date
 
 
 from tracks import *
-from ReportBuilder import npy_builder, hd5_dump, csv_dump
+from ReportBuilder import npy_builder, csv_dump
 
 
 # Class that inherits root window class from tk
@@ -29,7 +29,7 @@ class batchNPY(tk.Tk):
 
 
     def load(self, npy):
-        old_objs = np.load(f, allow_pickle=True)
+        old_objs = np.load(npy, allow_pickle=True)
         newobjs = []
         for idx, t in enumerate(old_objs):
             newobjs.append(TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse))
@@ -54,19 +54,12 @@ class batchNPY(tk.Tk):
         savepath = os.path.join(savepath, rf"SPT_{date.today().strftime('%d_%m_%Y')}_batch")
         os.makedirs(savepath, exist_ok=True)
 
-        all_arr = np.array([]) # TODO check if this for loop works for both branches
+        all_arr = np.array([]) 
         for obj in self.TrackObjects:
             all_arr = np.append(all_arr, obj)
-        manual = True if all_arr[0].manual_velo else False
+
         npy_builder(all_arr, [], savepath)
-        hd5_dump(all_arr, [], savepath)
         csv_dump(all_arr, None, savepath)
         self.destroy()
         exit()
 
-# Class that inherits root window class from tk
-class batchHD5(tk.Tk):
-
-    def __init__(self):
-        super().__init__()  # init of tk.Tk
-        # TODO build batch hd5's
