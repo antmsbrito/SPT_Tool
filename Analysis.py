@@ -70,7 +70,7 @@ def bruteforce(x, y):
     # Check 0 breakpoints since it might be better
     v, e = slope_and_mse(x, y)
     all_velos.append(v)
-    opt_results.append({'BIC': bayesianinfocriteria(e, 0, len(x)), 'x': [0, -1]})
+    opt_results.append({'BIC': bayesianinfocriteria(e, 0, len(x)), 'x': [0, -1], 'MSE':e})
 
     # Check 1-4 breakpoints
     for sec_n in range(1, 4):
@@ -88,10 +88,10 @@ def bruteforce(x, y):
         # Sanity check
         assert np.average(e1, weights=np.diff(optimum, prepend=0, append=len(x) - 1)) == e2
 
-        opt_results.append({'BIC': bayesianinfocriteria(e2, sec_n, len(x)), 'x': optimum})
+        opt_results.append({'BIC': bayesianinfocriteria(e2, sec_n, len(x)), 'x': optimum, 'MSE':e2})
 
     # Analyze all number of breakpoints and choose the min BIC
-    errors = [r['BIC'] for r in opt_results]
+    errors = [r['MSE'] for r in opt_results]
     velocity = all_velos[np.argmin(errors)]
     sections = [r['x'] for r in opt_results][np.argmin(errors)]
 
