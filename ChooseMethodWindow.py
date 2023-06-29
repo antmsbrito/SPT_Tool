@@ -5,8 +5,8 @@ Antonio Brito @ BCB lab ITQB
 
 import tkinter as tk
 from EllipseGUI import ellipseGUI
-from loadGUI import loadHD5, loadNPY
-from BatchGUI import batchHD5, batchNPY
+from loadGUI import loadNPY
+from BatchGUI import batchNPY
 
 
 # Class that inherits root window class from tk
@@ -31,12 +31,6 @@ class ChooseWindow(tk.Tk):
         ELLIPSE_button = tk.Button(master=self, text="Draw Ellipses (xml + tif)", command=self.ellipse)
         ELLIPSE_button.pack(side='top', fill='both')
 
-        LOADhd5_button = tk.Button(master=self, text="Load .h5 data", command=self.loadhd5)
-        LOADhd5_button.pack(side='top', fill='both')
-
-        BATCHhd5_button = tk.Button(master=self, text="Batch analysis (load several .h5 data)", command=self.batchhd5)
-        BATCHhd5_button.pack(side='top', fill='both')
-
         LOAD_button = tk.Button(master=self, text="Load .npy data (.npy [Legacy])", command=self.loadnpy)
         LOAD_button.pack(side='top', fill='both')
 
@@ -49,30 +43,6 @@ class ChooseWindow(tk.Tk):
         """
         self.destroy()
         gui = ellipseGUI()
-        gui.mainloop()
-
-    def loadhd5(self):
-        """
-        Open next GUI window for inputting one or more .npy files of previously loaded data
-        """
-        # TODO
-        print("WIP")
-        return
-
-        self.destroy()
-        gui = loadHD5()
-        gui.mainloop()
-
-    def batchhd5(self):
-        """
-        Opens next GUI window for batch analysis of several hd5s
-        """
-        # TODO
-        print("WIP")
-        return
-
-        self.destroy()
-        gui = batchHD5()
         gui.mainloop()
 
     def loadnpy(self):
