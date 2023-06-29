@@ -31,10 +31,10 @@ class ChooseWindow(tk.Tk):
         ELLIPSE_button = tk.Button(master=self, text="Draw Ellipses (xml + tif)", command=self.ellipse)
         ELLIPSE_button.pack(side='top', fill='both')
 
-        LOAD_button = tk.Button(master=self, text="Load .npy data (.npy [Legacy])", command=self.loadnpy)
+        LOAD_button = tk.Button(master=self, text="Load .npy data)", command=self.loadnpy)
         LOAD_button.pack(side='top', fill='both')
 
-        BATCH_button = tk.Button(master=self, text="Batch analysis (load several .npy [Legacy])", command=self.batchnpy)
+        BATCH_button = tk.Button(master=self, text="Batch analysis", command=self.batchnpy)
         BATCH_button.pack(side='top', fill='both')
 
     def ellipse(self):
