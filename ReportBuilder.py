@@ -5,7 +5,6 @@ ITQB-UNL BCB 2021
 """
 
 import os
-import h5py
 import json
 
 import numpy as np
