@@ -22,7 +22,7 @@ class batchNPY(tk.Tk):
         #load one by one
         for root, dirs, files in os.walk(folder):
             for file in files:
-                if file.endswith("Dump.npy"):
+                if file.endswith(".npy"):
                     self.load(root+os.sep+file)
 
         self.analyze()
