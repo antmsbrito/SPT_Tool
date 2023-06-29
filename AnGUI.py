@@ -12,7 +12,7 @@ from multiprocessing import Pool
 from tracks import *
 from GUI_ManualSectioning import ManualSectioning
 from Analysis import minmax
-from ReportBuilder import makeimage, npy_builder, hd5_dump, csv_dump
+from ReportBuilder import makeimage, npy_builder, csv_dump
 
 from tqdm import tqdm
 
@@ -114,10 +114,7 @@ class analysisGUI(tk.Tk):
         # 2 - csv file with results
         csv_dump(self.TrackList, self.savepath)
 
-        # 3 - hd5 dump
-        # hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
-
-        # 4 - images
+        # 3 - images
         if self.makeimagesvar.get() == 1:
             makeimage(self.TrackList, self.savepath, manualboolean)
 
