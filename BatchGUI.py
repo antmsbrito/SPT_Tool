@@ -29,7 +29,9 @@ class batchNPY(tk.Tk):
 
 
     def load(self, npy):
+        print(f"Loading {npy}")
         old_objs = np.load(npy, allow_pickle=True)
+        print(f"Loaded {len(old_objs)} tracks")
         newobjs = []
         for idx, t in enumerate(old_objs):
             newobjs.append(TrackV2(t.imageobject, t.x, t.y, t.samplerate, t.name, t.ellipse))
@@ -59,7 +61,7 @@ class batchNPY(tk.Tk):
             all_arr = np.append(all_arr, obj)
 
         npy_builder(all_arr, [], savepath)
-        csv_dump(all_arr, None, savepath)
+        csv_dump(all_arr, savepath)
         self.destroy()
         exit()
 
