@@ -14,7 +14,6 @@ from GUI_ManualSectioning import ManualSectioning
 from Analysis import minmax
 from ReportBuilder import makeimage, npy_builder, hd5_dump, csv_dump
 
-# test
 from tqdm import tqdm
 
 class analysisGUI(tk.Tk):
@@ -97,6 +96,7 @@ class analysisGUI(tk.Tk):
             end = time.time()
             print(f"Breakpoint optimization in {end-start:.2f} seconds")
 
+            # Not parallelized
             """
             for tr in self.TrackList:
                 tr.minmax_velo, tr.minmax_sections = minmax(tr)
@@ -108,19 +108,16 @@ class analysisGUI(tk.Tk):
             manualboolean = False
 
         # What to save?
-        # 1 - array of Track objects (.npy) to reload for reanalysis (for legacy purposes)
+        # 1 - array of Track objects (.npy) to reload for reanalysis
         npy_builder(self.TrackList, self.RejectedTracks, self.savepath)
 
-        # 2 - TODO jupiter
-
-        # 3 - csv file with results
+        # 2 - csv file with results
         csv_dump(self.TrackList, self.savepath)
 
-        # 4 - hd5 dump
-        # todo
-        hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
+        # 3 - hd5 dump
+        # hd5_dump(self.TrackList, self.RejectedTracks, self.savepath)
 
-        # 5 - images
+        # 4 - images
         if self.makeimagesvar.get() == 1:
             makeimage(self.TrackList, self.savepath, manualboolean)
 
