@@ -21,7 +21,6 @@
 ###### `conda activate env_name`
 ###### 3. Use SPT_tool
 ###### `python ChooseMethodWindow.py`
-###### 4. There are several options to continue, but all of them assume a trackmate .xml file
 
 
 ###NOTE:
